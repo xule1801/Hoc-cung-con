@@ -1,0 +1,44 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+
+# Dependencies
+node_modules/
+__pycache__/
+.venv/
+venv/
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# Coverage
+coverage/
+.nyc_output/
+htmlcov/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+.docker/
