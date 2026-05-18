@@ -1,26 +1,28 @@
 # Workflow Status
 
-**Dự án:** Hoc-cung-con
-**Bắt đầu:** 2026-05-18 21:44
-**Cập nhật:** 2026-05-18 21:44
-**Trạng thái tổng:** IN_PROGRESS
+**Du an:** Hoc-cung-con  
+**Bat dau:** 2026-05-18 21:56  
+**Cap nhat:** 2026-05-18 23:02  
+**Trang thai tong:** WAITING_USER_ACTION
 
 ## Gate Status
 
-| Gate | Tên                  | Agent               | Trạng thái  | Lần thử | Timestamp      |
-|------|---------------------|---------------------|-------------|---------|----------------|
-| 0    | Project Init         | workflow-controller | IN_PROGRESS | 1       | 2026-05-18 21:44   |
-| 1    | BA Analysis          | ba-agent            | PENDING     | 0       | —              |
-| 2    | Architecture         | architect-agent     | PENDING     | 0       | —              |
-| 3    | Development          | dev-agent           | PENDING     | 0       | —              |
-| 4    | Testing              | test-agent          | PENDING     | 0       | —              |
-| 5    | Code Review          | review-agent        | PENDING     | 0       | —              |
-| 6    | Release Preparation  | devops-agent        | PENDING     | 0       | —              |
-| 7    | Deploy               | devops-agent        | PENDING     | 0       | —              |
-| 8    | Post-Deploy Monitor  | devops-agent        | PENDING     | 0       | —              |
+| Gate | Ten                 | Agent               | Trang thai                | Lan thu | Timestamp         |
+|------|---------------------|---------------------|---------------------------|---------|-------------------|
+| 0    | Project Init         | workflow-controller | PASS                      | 1       | 2026-05-18 21:56  |
+| 1    | BA Analysis          | ba-agent            | PASS                      | 2       | 2026-05-18 22:20  |
+| 2    | Architecture         | architect-agent     | PASS_WITH_MINOR_ISSUES    | 2       | 2026-05-18 22:22  |
+| 3    | Development          | dev-agent           | IN_PROGRESS               | 3       | 2026-05-18 22:40  |
+| 4    | Testing              | test-agent          | PASS_WITH_MINOR_ISSUES    | 1       | 2026-05-18 22:36  |
+| 5    | Code Review          | review-agent        | PASS_WITH_MINOR_ISSUES    | 1       | 2026-05-18 22:42  |
+| 6    | Release Preparation  | devops-agent        | PASS_WITH_MINOR_ISSUES    | 1       | 2026-05-18 22:47  |
+| 7    | Deploy               | devops-agent        | WAITING_USER_ACTION       | 1       | 2026-05-18 23:02  |
+| 8    | Post-Deploy Monitor  | devops-agent        | PENDING                   | 0       | —                 |
 
-## Vấn đề đang mở (Open Issues)
-_Chưa có_
+## Van de dang mo
+- Chua co do luong test coverage.
+- Chua co bo test integration/e2e.
+- Chua tich hop image/audio asset rieng cho noi dung hoc.
 
 ## Override Log
-_Chưa có_
+- Platform deploy da chon: Streamlit Community Cloud (2026-05-18).

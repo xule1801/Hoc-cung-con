@@ -1,0 +1,29 @@
+{
+  "name": "Hoc-cung-con",
+  "version": "0.1.0",
+  "description": "Multi-agent Antigravity project: Hoc-cung-con",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Configure dev script in package.json'",
+    "build": "echo 'Configure build script'",
+    "start": "node dist/index.js",
+    "test": "echo 'Configure test command'",
+    "test:cov": "echo 'Configure coverage command'",
+    "lint": "eslint src --ext .ts,.tsx",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write 'src/**/*.{ts,tsx,css,json,md}'",
+    "db:migrate": "echo 'Configure database migration command'"
+  },
+  "keywords": [
+    "multi-agent",
+    "workflow",
+    "antigravity"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
