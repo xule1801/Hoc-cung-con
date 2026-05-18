@@ -225,7 +225,6 @@ def speak(text: str, lang: str, enabled: bool) -> None:
         return
     lang_code = "vi-VN" if lang == "vi" else "en-US"
     safe = text.replace("'", "\\'")
-    key = uuid.uuid4().hex
     components.html(
         f"""
         <script>
@@ -237,7 +236,6 @@ def speak(text: str, lang: str, enabled: bool) -> None:
         </script>
         """,
         height=0,
-        key=key,
     )
 
 

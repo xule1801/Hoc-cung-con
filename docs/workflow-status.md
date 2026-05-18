@@ -12,11 +12,11 @@
 | 0    | Project Init         | workflow-controller | PASS                      | 1       | 2026-05-18 21:56  |
 | 1    | BA Analysis          | ba-agent            | PASS                      | 2       | 2026-05-18 22:20  |
 | 2    | Architecture         | architect-agent     | PASS_WITH_MINOR_ISSUES    | 2       | 2026-05-18 22:22  |
-| 3    | Development          | dev-agent           | IN_PROGRESS               | 3       | 2026-05-18 22:40  |
+| 3    | Development          | dev-agent           | PASS_WITH_MINOR_ISSUES    | 3       | 2026-05-18 22:40  |
 | 4    | Testing              | test-agent          | PASS_WITH_MINOR_ISSUES    | 1       | 2026-05-18 22:36  |
 | 5    | Code Review          | review-agent        | PASS_WITH_MINOR_ISSUES    | 1       | 2026-05-18 22:42  |
 | 6    | Release Preparation  | devops-agent        | PASS_WITH_MINOR_ISSUES    | 1       | 2026-05-18 22:47  |
-| 7    | Deploy               | devops-agent        | WAITING_USER_ACTION       | 1       | 2026-05-18 23:02  |
+| 7    | Deploy               | devops-agent        | IN_PROGRESS               | 1       | 2026-05-18 23:08  |
 | 8    | Post-Deploy Monitor  | devops-agent        | PENDING                   | 0       | —                 |
 
 ## Van de dang mo
