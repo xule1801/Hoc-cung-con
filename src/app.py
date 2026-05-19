@@ -614,13 +614,13 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     completed = st.session_state.index
 
-    hdr_l, _, hdr_r = st.columns([2, 6, 2])
-    with hdr_l:
-        if st.button(ICONS["home"], key="quiz_home_button", use_container_width=True):
+    _, col_home, col_sound = st.columns([5, 3, 2])
+    with col_home:
+        if st.button(t["home"], key="quiz_home_button", use_container_width=True):
             stop_applause()
             st.session_state.screen = "home"
             st.rerun()
-    with hdr_r:
+    with col_sound:
         if st.button(
             ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"],
             key="quiz_sound_button",
@@ -1006,22 +1006,26 @@ def main():
                 box-shadow: none;
             }
             /* Icon buttons — broad selectors survive Streamlit DOM changes */
-            button[aria-label="🏠"],
-            div[data-testid="stButton"] button[aria-label="🏠"] {
-                height: 64px !important;
-                border-radius: 14px !important;
-                font-size: 2rem !important;
-                background: transparent !important;
+            button[aria-label="Trang chủ"],
+            button[aria-label="Home"],
+            div[data-testid="stButton"] button[aria-label="Trang chủ"],
+            div[data-testid="stButton"] button[aria-label="Home"] {
+                height: 48px !important;
+                border-radius: 12px !important;
+                font-size: 0.9rem !important;
+                font-weight: 700 !important;
+                background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+                color: #FFFFFF !important;
                 border: none !important;
-                box-shadow: none !important;
+                box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25) !important;
             }
             button[aria-label="🔊"],
             button[aria-label="🔇"],
             div[data-testid="stButton"] button[aria-label="🔊"],
             div[data-testid="stButton"] button[aria-label="🔇"] {
-                height: 64px !important;
-                border-radius: 14px !important;
-                font-size: 2rem !important;
+                height: 48px !important;
+                border-radius: 12px !important;
+                font-size: 1.6rem !important;
                 background: #FFFFFF !important;
                 border: 2.5px solid #4A90D9 !important;
                 box-shadow: 0 2px 8px rgba(74, 144, 217, 0.18) !important;
@@ -1081,10 +1085,9 @@ def main():
                     height: 56px !important;
                     font-size: 1.8rem !important;
                 }
-                button[aria-label="🏠"],
                 button[aria-label="🔊"],
                 button[aria-label="🔇"] {
-                    height: 56px !important;
+                    height: 48px !important;
                     font-size: 1.8rem !important;
                 }
                 button[aria-label^="🎧"],
