@@ -672,7 +672,7 @@ def render_quiz():
             }
             .answer-card img {
                 width: 100%;
-                height: clamp(96px, 17dvh, 156px);
+                height: clamp(100px, 40dvh, 168px);
                 object-fit: contain;
                 border-radius: 8px;
                 display: block;
@@ -701,7 +701,7 @@ def render_quiz():
             </div>
             '''
         grid_html += "</div>"
-        components.html(grid_html, height=360, width=360, scrolling=False)
+        components.html(grid_html, height=380, scrolling=False)
     else:
         # PRE-ANSWER: images are directly clickable via streamlit-clickable-images
         if clickable_images is not None:
@@ -832,9 +832,15 @@ def main():
                 background-color: #FAF9F6;
                 overflow-x: hidden !important;
             }
-            html, body, [data-testid="stAppViewContainer"], .main {
-                overflow-x: hidden !important;
+            html, body {
+                overflow: hidden !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+            }
+            [data-testid="stAppViewContainer"], .main {
+                overflow: hidden !important;
                 max-width: 100vw !important;
+                height: 100dvh !important;
             }
             :root {
                 --space-1: 4px;
@@ -1240,25 +1246,27 @@ def main():
             /* Samsung Galaxy A73 5G ~ 412x915 CSS viewport */
             @media (min-width: 400px) and (max-width: 430px) and (min-height: 880px) and (max-height: 940px) {
                 .main .block-container {
-                    padding-top: max(env(safe-area-inset-top), 8px) !important;
-                    padding-bottom: max(env(safe-area-inset-bottom), 8px) !important;
+                    padding-top: max(env(safe-area-inset-top), 10px) !important;
+                    padding-bottom: max(env(safe-area-inset-bottom), 10px) !important;
                 }
                 .home-title, .guide-title, .result-title {
-                    font-size: 1.45rem !important;
+                    font-size: 1.5rem !important;
                 }
                 .quiz-score {
-                    font-size: 1.02rem;
+                    font-size: 1.05rem;
                 }
                 .quiz-prompt {
-                    font-size: 1.05rem !important;
-                    margin: 0.3rem 0 0.22rem 0 !important;
+                    font-size: 1.08rem !important;
+                    margin: 0.35rem 0 0.25rem 0 !important;
                 }
+                /* Pre-answer: images in clickable_images grid (dvh = main viewport 915px)
+                   18dvh × 915 = 164.7px → max 168px */
                 .answer-card img {
-                    height: clamp(104px, 16.5dvh, 152px);
+                    height: clamp(140px, 18dvh, 168px);
                 }
                 div[data-testid="stButton"] button[aria-label^="🎧"] {
-                    height: 62px;
-                    font-size: 1.15rem;
+                    height: 64px;
+                    font-size: 1.18rem;
                 }
                 .stButton button[kind="primary"] {
                     height: 58px;
@@ -1267,15 +1275,21 @@ def main():
                 }
                 div[data-testid="stButton"]:has(button[aria-label="➤"]) {
                     right: max(env(safe-area-inset-right), 18px) !important;
-                    bottom: max(env(safe-area-inset-bottom), 18px) !important;
+                    bottom: max(env(safe-area-inset-bottom), 20px) !important;
                     width: 58px !important;
                     height: 58px !important;
                 }
                 .result-stats {
-                    gap: 5px;
+                    gap: 6px;
                 }
                 .guide-item, .result-feedback {
-                    font-size: 0.9rem;
+                    font-size: 0.92rem;
+                }
+                /* Post-answer: expand the locked-state answer grid iframe.
+                   At 420px: 40dvh × 420 = 168px → matches pre-answer images. */
+                div[data-testid="stCustomComponentV1"]:not([style*="height: 0"]) iframe {
+                    height: 420px !important;
+                    min-height: 420px !important;
                 }
             }
         </style>
