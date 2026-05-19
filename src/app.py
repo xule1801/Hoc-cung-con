@@ -695,6 +695,7 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     completed = st.session_state.index
 
+    st.markdown("<div class='quiz-header-row'></div>", unsafe_allow_html=True)
     c_home, c_space, c_sound = st.columns([1, 3.2, 1], vertical_alignment="center")
     with c_home:
         if st.button(ICONS["home"], use_container_width=True):
@@ -839,6 +840,7 @@ def render_quiz():
             st.session_state.feedback_spoken_index = st.session_state.index
 
     if st.session_state.answer_locked:
+        st.markdown("<div class='quiz-next-row'></div>", unsafe_allow_html=True)
         next_left, next_button = st.columns([5.0, 1.0], vertical_alignment="bottom")
         with next_button:
             if st.button(ICONS["next"], key=f"next_{st.session_state.index}", use_container_width=True, type="primary"):
@@ -1144,6 +1146,30 @@ def main():
                 border: none;
                 box-shadow: none;
             }
+            .quiz-header-row + div[data-testid="stHorizontalBlock"] {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+            }
+            .quiz-header-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+                min-width: 0 !important;
+            }
+            .quiz-next-row + div[data-testid="stHorizontalBlock"] {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                align-items: flex-end !important;
+            }
+            .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+                min-width: 0 !important;
+            }
+            .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
+                flex: 1 1 auto !important;
+            }
+            .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                flex: 0 0 64px !important;
+                max-width: 64px !important;
+                margin-left: auto !important;
+            }
             /* Images */
             div[data-testid="stImage"] img {
                 border-radius: 14px;
@@ -1162,6 +1188,10 @@ def main():
                     width: 56px;
                     min-width: 56px;
                     font-size: 2rem;
+                }
+                .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                    flex: 0 0 56px !important;
+                    max-width: 56px !important;
                 }
                 div[data-testid="stButton"] button[aria-label="🏠"],
                 div[data-testid="stButton"] button[aria-label="🔊"],
@@ -1239,6 +1269,10 @@ def main():
                     width: 52px;
                     min-width: 52px;
                 }
+                .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                    flex: 0 0 52px !important;
+                    max-width: 52px !important;
+                }
                 .quiz-prompt {
                     font-size: 0.95rem !important;
                 }
@@ -1285,6 +1319,10 @@ def main():
                     height: 58px;
                     width: 58px;
                     min-width: 58px;
+                }
+                .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                    flex: 0 0 58px !important;
+                    max-width: 58px !important;
                 }
                 .result-stats {
                     gap: 5px;
