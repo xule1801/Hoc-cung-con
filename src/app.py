@@ -2,6 +2,10 @@ import random
 import base64
 import mimetypes
 import json
+import os
+import html
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 import streamlit as st
@@ -81,7 +85,10 @@ def render_fireworks():
         b64 = base64.b64encode(applause_path.read_bytes()).decode()
         audio_js = f"""
         var parentDoc = window.parent.document;
+        var oldAudio = parentDoc.getElementById("completion-applause");
+        if (oldAudio) {{ oldAudio.pause(); oldAudio.remove(); }}
         var audio = parentDoc.createElement("audio");
+        audio.id = "completion-applause";
         audio.src = "data:{applause_mime};base64,{b64}";
         audio.volume = 0.9;
         audio.loop = true;
@@ -109,55 +116,142 @@ def render_fireworks():
     st.components.v1.html(html_str, width=0, height=0)
 
 
-def render_speech_button(text: str, lang: str, label: str, enabled: bool) -> None:
+def stop_applause():
+    st.components.v1.html(
+        """
+        <script>
+            var audio = window.parent.document.getElementById("completion-applause");
+            if (audio) {
+                audio.pause();
+                audio.remove();
+            }
+        </script>
+        """,
+        width=0,
+        height=0,
+    )
+
+
+def get_config_value(name: str, default: str = "") -> str:
+    value = os.getenv(name)
+    if value:
+        return value
+    try:
+        value = st.secrets.get(name, default)
+    except Exception:
+        value = default
+    return str(value) if value else default
+
+
+def azure_voice(lang: str) -> str:
+    if lang == "vi":
+        return get_config_value("AZURE_SPEECH_VOICE_VI", "vi-VN-HoaiMyNeural")
+    return get_config_value("AZURE_SPEECH_VOICE_EN", "en-US-JennyNeural")
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def azure_tts_data_uri(text: str, lang: str):
+    key = get_config_value("AZURE_SPEECH_KEY")
+    region = get_config_value("AZURE_SPEECH_REGION")
+    if not key or not region:
+        return None
+
+    voice = azure_voice(lang)
+    language = "vi-VN" if lang == "vi" else "en-US"
+    ssml_text = html.escape(text, quote=True)
+    ssml = f"""
+    <speak version="1.0" xml:lang="{language}">
+      <voice xml:lang="{language}" name="{voice}">{ssml_text}</voice>
+    </speak>
+    """.strip()
+    request = urllib.request.Request(
+        f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1",
+        data=ssml.encode("utf-8"),
+        headers={
+            "Ocp-Apim-Subscription-Key": key,
+            "Content-Type": "application/ssml+xml",
+            "X-Microsoft-OutputFormat": "audio-16khz-32kbitrate-mono-mp3",
+            "User-Agent": "hoc-cung-con-streamlit",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            audio_bytes = response.read()
+    except (urllib.error.URLError, TimeoutError, ValueError):
+        return None
+    encoded = base64.b64encode(audio_bytes).decode("utf-8")
+    return f"data:audio/mpeg;base64,{encoded}"
+
+
+def render_speech_button(
+    text: str,
+    lang: str,
+    label: str,
+    enabled: bool,
+    state_button_label=None,
+) -> None:
     if not enabled:
         return
-    lang_code = "vi-VN" if lang == "vi" else "en-US"
-    text_json = json.dumps(text, ensure_ascii=False)
-    lang_json = json.dumps(lang_code)
     label_json = json.dumps(label, ensure_ascii=False)
+    state_button_label_json = json.dumps(state_button_label, ensure_ascii=False)
+    audio_src = azure_tts_data_uri(text, lang)
+    audio_src_json = json.dumps(audio_src) if audio_src else "null"
     html_str = f"""
     <button id="speak-btn" type="button"></button>
     <script>
       const btn = document.getElementById("speak-btn");
+      const audioSrc = {audio_src_json};
+      const stateButtonLabel = {state_button_label_json};
+      const triggerStateButton = function() {{
+        if (!stateButtonLabel) return;
+        let parentDoc = document;
+        try {{
+          parentDoc = window.parent.document;
+        }} catch (e) {{}}
+        const buttons = Array.from(parentDoc.querySelectorAll("button"));
+        const stateButton = buttons.find(b => b.getAttribute("aria-label") === stateButtonLabel || b.textContent.trim() === stateButtonLabel);
+        if (stateButton) stateButton.click();
+      }};
       btn.textContent = {label_json};
       btn.style.width = "100%";
-      btn.style.height = "44px";
+      btn.style.height = "62px";
       btn.style.border = "0";
-      btn.style.borderRadius = "0 0 18px 18px";
-      btn.style.background = "linear-gradient(135deg, #67E8F9 0%, #60A5FA 100%)";
-      btn.style.color = "#1f2937";
-      btn.style.fontSize = "20px";
+      btn.style.borderRadius = "10px";
+      btn.style.background = "#6D9DF0";
+      btn.style.color = "#FFE6A8";
+      btn.style.fontSize = "34px";
       btn.style.fontWeight = "700";
       btn.style.cursor = "pointer";
       btn.onclick = function() {{
-        let synth = window.speechSynthesis;
+        let parentDoc = document;
         try {{
-          synth = synth || window.parent.speechSynthesis;
+          parentDoc = window.parent.document;
         }} catch (e) {{}}
-        if (!synth) return;
-        const speakNow = function() {{
-          synth.cancel();
-          const utterance = new SpeechSynthesisUtterance({text_json});
-          utterance.lang = {lang_json};
-          utterance.rate = 0.86;
-          utterance.pitch = 1.05;
-          const voices = synth.getVoices ? synth.getVoices() : [];
-          const voice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith({lang_json}.slice(0, 2).toLowerCase()));
-          if (voice) utterance.voice = voice;
-          synth.speak(utterance);
-        }};
-        const voices = synth.getVoices ? synth.getVoices() : [];
-        if (voices.length === 0 && "onvoiceschanged" in synth) {{
-          synth.onvoiceschanged = speakNow;
-          setTimeout(speakNow, 250);
+        if (audioSrc) {{
+          const oldAudio = parentDoc.getElementById("tts-replay-audio");
+          if (oldAudio) oldAudio.remove();
+          const audio = parentDoc.createElement("audio");
+          audio.id = "tts-replay-audio";
+          audio.src = audioSrc;
+          audio.playsInline = true;
+          audio.volume = 1;
+          parentDoc.body.appendChild(audio);
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {{
+            playPromise.catch(function() {{ triggerStateButton(); }});
+          }}
+          audio.onended = function() {{
+            audio.remove();
+            triggerStateButton();
+          }};
         }} else {{
-          speakNow();
+          triggerStateButton();
         }}
       }};
     </script>
     """
-    components.html(html_str, height=46, scrolling=False)
+    components.html(html_str, height=66, scrolling=False)
 
 
 
@@ -176,7 +270,7 @@ LANG = {
         "progress": "Câu",
         "score": "Điểm",
         "replay_audio": "Nghe lại câu hỏi",
-        "sound_on": "Nhạc nền bật",
+        "sound_on": "Âm thanh bật",
         "sound_off": "Âm thanh tắt",
         "select": "Chọn",
         "next_question": "Câu tiếp theo",
@@ -218,7 +312,7 @@ LANG = {
         "progress": "Question",
         "score": "Score",
         "replay_audio": "Replay question",
-        "sound_on": "Background music on",
+        "sound_on": "Sound on",
         "sound_off": "Sound off",
         "select": "Select",
         "next_question": "Next question",
@@ -391,16 +485,20 @@ def topic_label(topic_key: str, lang: str) -> str:
 def speak(text: str, lang: str, enabled: bool) -> None:
     if not enabled:
         return
-    lang_code = "vi-VN" if lang == "vi" else "en-US"
-    safe = text.replace("'", "\\'")
+    audio_src = azure_tts_data_uri(text, lang)
+    if not audio_src:
+        return
+    audio_src_json = json.dumps(audio_src)
     components.html(
         f"""
+        <audio id="tts-audio" src={audio_src_json} autoplay playsinline></audio>
         <script>
-            const u = new SpeechSynthesisUtterance('{safe}');
-            u.lang = '{lang_code}';
-            u.rate = 0.9;
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(u);
+            const audio = document.getElementById("tts-audio");
+            audio.volume = 1;
+            const p = audio.play();
+            if (p !== undefined) {{
+                p.catch(function() {{}});
+            }}
         </script>
         """,
         height=0,
@@ -461,6 +559,7 @@ def init_state():
     st.session_state.setdefault("index", 0)
     st.session_state.setdefault("score", 0)
     st.session_state.setdefault("last_message", "")
+    st.session_state.setdefault("last_audio_message", "")
     st.session_state.setdefault("last_type", "")
     st.session_state.setdefault("last_spoken_index", -1)
     st.session_state.setdefault("feedback_spoken_index", -1)
@@ -468,6 +567,7 @@ def init_state():
     st.session_state.setdefault("selected_option_index", -1)
     st.session_state.setdefault("question_had_wrong_attempt", False)
     st.session_state.setdefault("question_scored", False)
+    st.session_state.setdefault("pending_score_increment", 0)
     st.session_state.setdefault("replay_count", 0)
     st.session_state.setdefault("celebrated", False)
 
@@ -477,6 +577,7 @@ def start_round():
     st.session_state.index = 0
     st.session_state.score = 0
     st.session_state.last_message = ""
+    st.session_state.last_audio_message = ""
     st.session_state.last_type = ""
     st.session_state.last_spoken_index = -1
     st.session_state.feedback_spoken_index = -1
@@ -484,6 +585,7 @@ def start_round():
     st.session_state.selected_option_index = -1
     st.session_state.question_had_wrong_attempt = False
     st.session_state.question_scored = False
+    st.session_state.pending_score_increment = 0
     st.session_state.replay_count = 0
     st.session_state.celebrated = False
     st.session_state.screen = "quiz"
@@ -498,13 +600,17 @@ def handle_choice(selected_idx: int, q: dict, t: dict) -> None:
             not st.session_state.question_had_wrong_attempt
             and not st.session_state.question_scored
         ):
-            st.session_state.score += 1
+            st.session_state.pending_score_increment = 1
             st.session_state.question_scored = True
-        st.session_state.last_message = random.choice(t["correct"])
+        feedback = random.choice(t["correct"])
+        st.session_state.last_message = feedback
+        st.session_state.last_audio_message = feedback
         st.session_state.last_type = "success"
     else:
+        feedback = random.choice(t["wrong"])
         st.session_state.question_had_wrong_attempt = True
-        st.session_state.last_message = f"{random.choice(t['wrong'])} ({q['correct']})"
+        st.session_state.last_message = f"{feedback} ({q['correct']})"
+        st.session_state.last_audio_message = feedback
         st.session_state.last_type = "warning"
 
 
@@ -526,6 +632,7 @@ def render_parent_guide():
     c1, c2 = st.columns(2)
     with c1:
         if st.button("🏠 " + t["home"], use_container_width=True):
+            stop_applause()
             st.session_state.screen = "home"
             st.rerun()
     with c2:
@@ -557,11 +664,9 @@ def render_home():
     )
     st.session_state.topic = selected
 
-    st.session_state.bgm_enabled = st.toggle(
-        "🎵 " + t["sound_on"],
-        value=st.session_state.bgm_enabled,
-    )
+    st.session_state.bgm_enabled = st.toggle("🔊 " + t["sound_on"], value=st.session_state.bgm_enabled)
 
+    st.markdown("<div class='home-action-buttons'></div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
         if st.button("🚀 " + t["start"], use_container_width=True):
@@ -577,11 +682,12 @@ def render_quiz():
     lang = st.session_state.lang
     t = LANG[lang]
     q = st.session_state.round[st.session_state.index]
-    current = st.session_state.index + 1
+    completed = st.session_state.index
 
     c_home, c_space, c_sound = st.columns([1, 3.2, 1])
     with c_home:
         if st.button("🏠", use_container_width=True):
+            stop_applause()
             st.session_state.screen = "home"
             st.rerun()
     with c_sound:
@@ -591,20 +697,28 @@ def render_quiz():
 
     score_label = "Số câu đúng" if lang == "vi" else "Correct answers"
     st.markdown(
-        f"<div class='quiz-score'>{score_label}: {st.session_state.score}/{current}</div>",
+        f"<div class='quiz-score'>{score_label}: {st.session_state.score}/{completed}</div>",
         unsafe_allow_html=True,
     )
 
-    if st.button("🎧 " + t["replay_audio"], key=f"replay_{st.session_state.index}", use_container_width=True):
-        speak(q["prompt"], lang, True)
-        if st.session_state.answer_locked and st.session_state.last_type == "warning":
+    replay_state_label = "\u2063" if st.session_state.answer_locked and st.session_state.last_type == "warning" else None
+    render_speech_button(
+        q["prompt"],
+        lang,
+        "🎧 " + t["replay_audio"],
+        True,
+        replay_state_label,
+    )
+    if replay_state_label:
+        if st.button(replay_state_label, key=f"replay_{st.session_state.index}", use_container_width=True):
             st.session_state.answer_locked = False
             st.session_state.selected_option_index = -1
             st.session_state.last_message = ""
+            st.session_state.last_audio_message = ""
             st.session_state.last_type = ""
             st.session_state.feedback_spoken_index = -1
-        st.session_state.replay_count += 1
-        st.rerun()
+            st.session_state.replay_count += 1
+            st.rerun()
 
     st.markdown(f"<h3 class='quiz-prompt'>{q['prompt']}</h3>", unsafe_allow_html=True)
 
@@ -710,14 +824,17 @@ def render_quiz():
     # ── Feedback & next button ──────────────────────────────────────────────
     if st.session_state.last_message:
         if st.session_state.feedback_spoken_index != st.session_state.index:
-            speak(st.session_state.last_message, lang, True)
+            speak(st.session_state.last_audio_message or st.session_state.last_message, lang, True)
             st.session_state.feedback_spoken_index = st.session_state.index
 
     if st.session_state.answer_locked:
         next_left, next_button, next_right = st.columns([3.2, 1.15, 0.45])
         with next_button:
             if st.button("›", key=f"next_{st.session_state.index}", use_container_width=True, type="primary"):
+                st.session_state.score += st.session_state.pending_score_increment
+                st.session_state.pending_score_increment = 0
                 st.session_state.last_message = ""
+                st.session_state.last_audio_message = ""
                 st.session_state.last_type = ""
                 st.session_state.feedback_spoken_index = -1
                 st.session_state.index += 1
@@ -725,6 +842,7 @@ def render_quiz():
                 st.session_state.selected_option_index = -1
                 st.session_state.question_had_wrong_attempt = False
                 st.session_state.question_scored = False
+                st.session_state.pending_score_increment = 0
                 st.session_state.replay_count = 0  # reset for next question
                 if st.session_state.index >= len(st.session_state.round):
                     st.session_state.screen = "result"
@@ -752,14 +870,17 @@ def render_result():
     c1, c2, c3 = st.columns(3)
     with c1:
         if st.button("🔁 " + t["play_again"], use_container_width=True):
+            stop_applause()
             start_round()
             st.rerun()
     with c2:
         if st.button("🧩 " + t["change_topic"], use_container_width=True):
+            stop_applause()
             st.session_state.screen = "home"
             st.rerun()
     with c3:
         if st.button("🏠 " + t["home"], use_container_width=True):
+            stop_applause()
             st.session_state.screen = "home"
             st.rerun()
 
@@ -808,6 +929,26 @@ def main():
                 text-align: center;
                 margin: 0.1rem 0 0.2rem 0 !important;
                 line-height: 1.1;
+            }
+            .home-action-buttons + div[data-testid="stHorizontalBlock"] button {
+                min-height: 76px;
+                border-radius: 28px;
+                border: 3px solid rgba(245, 158, 11, 0.45);
+                background:
+                    radial-gradient(circle at 18% 24%, rgba(255,255,255,0.95) 0 13%, transparent 14%),
+                    radial-gradient(circle at 88% 80%, rgba(255,255,255,0.55) 0 11%, transparent 12%),
+                    linear-gradient(135deg, #FFF2A8 0%, #FDBA74 50%, #FB7185 100%);
+                color: #1f2937;
+                font-size: clamp(1.15rem, 3vw, 1.45rem);
+                font-weight: 800;
+                box-shadow: 0 12px 0 #F59E0B, 0 18px 28px rgba(180, 83, 9, 0.22);
+                transform: translateY(0);
+                transition: transform 0.12s ease, box-shadow 0.12s ease;
+            }
+            .home-action-buttons + div[data-testid="stHorizontalBlock"] button:hover {
+                border-color: rgba(245, 158, 11, 0.8);
+                transform: translateY(3px);
+                box-shadow: 0 8px 0 #F59E0B, 0 14px 24px rgba(180, 83, 9, 0.18);
             }
             .quiz-prompt {
                 text-align: center;
@@ -876,6 +1017,10 @@ def main():
                 border-radius: 10px;
                 box-shadow: none;
                 margin: 0 0 0.45rem 0;
+            }
+            div[data-testid="stButton"]:has(button[aria-label="⁣"]),
+            div[data-testid="stButton"] button[aria-label="⁣"] {
+                display: none;
             }
             div[data-testid="stButton"] button[kind="secondary"]:hover {
                 border: none;
