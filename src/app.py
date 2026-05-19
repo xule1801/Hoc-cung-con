@@ -330,6 +330,7 @@ def init_state():
     st.session_state.setdefault("feedback_spoken_index", -1)
     st.session_state.setdefault("answer_locked", False)
     st.session_state.setdefault("selected_option_index", -1)
+    st.session_state.setdefault("replay_count", 0)
 
 
 def start_round():
@@ -342,6 +343,7 @@ def start_round():
     st.session_state.feedback_spoken_index = -1
     st.session_state.answer_locked = False
     st.session_state.selected_option_index = -1
+    st.session_state.replay_count = 0
     st.session_state.screen = "quiz"
 
 
@@ -424,6 +426,9 @@ def render_quiz():
 
     if st.button("🔁 " + t["replay_audio"], use_container_width=True):
         speak(q["prompt"], lang, st.session_state.sound)
+        # Force clickable_images to remount fresh (clear stale click state)
+        st.session_state.replay_count += 1
+        st.rerun()
 
     if st.session_state.last_spoken_index != st.session_state.index:
         speak(q["prompt"], lang, st.session_state.sound)
@@ -474,7 +479,7 @@ def render_quiz():
                     "box-shadow": "0 4px 14px rgba(0,0,0,0.10)",
                     "transition": "transform 0.12s ease, box-shadow 0.12s ease",
                 },
-                key=f"img_click_{st.session_state.index}",
+                key=f"img_click_{st.session_state.index}_{st.session_state.replay_count}",
             )
             if selected_idx > -1:
                 st.session_state.selected_option_index = selected_idx
@@ -534,6 +539,7 @@ def render_quiz():
             st.session_state.index += 1
             st.session_state.answer_locked = False
             st.session_state.selected_option_index = -1
+            st.session_state.replay_count = 0  # reset for next question
             if st.session_state.index >= len(st.session_state.round):
                 st.session_state.screen = "result"
             st.rerun()
