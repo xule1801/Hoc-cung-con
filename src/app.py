@@ -653,7 +653,33 @@ def render_quiz():
 
     # ── Image choice grid ──────────────────────────────────────────────────
     if st.session_state.answer_locked:
-        grid_html = "<div class='answer-grid'>"
+        grid_html = """
+        <style>
+            body { margin: 0; padding: 0; overflow: hidden; background: transparent; }
+            .answer-grid {
+                width: 100%;
+                box-sizing: border-box;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                padding: 0 16px;
+            }
+            .answer-card {
+                border-radius: 12px;
+                padding: 3px;
+                box-shadow: 0 6px 10px rgba(0,0,0,0.08);
+                box-sizing: border-box;
+            }
+            .answer-card img {
+                width: 100%;
+                height: clamp(96px, 17dvh, 156px);
+                object-fit: contain;
+                border-radius: 8px;
+                display: block;
+            }
+        </style>
+        <div class="answer-grid">
+        """
         for i in range(len(q["options"])):
             opt_label = q["options"][i]
             img_path = q["option_images"][i]
@@ -670,12 +696,12 @@ def render_quiz():
             
             b64_uri = to_data_uri(img_path)
             grid_html += f'''
-            <div class="answer-card locked-answer-card" style="border:{border}; background:{bg};">
+            <div class="answer-card" style="border:{border}; background:{bg};">
                 <img src="{b64_uri}">
             </div>
             '''
         grid_html += "</div>"
-        st.markdown(grid_html, unsafe_allow_html=True)
+        components.html(grid_html, height=360, width=360, scrolling=False)
     else:
         # PRE-ANSWER: images are directly clickable via streamlit-clickable-images
         if clickable_images is not None:
