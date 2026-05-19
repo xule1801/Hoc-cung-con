@@ -614,17 +614,20 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     completed = st.session_state.index
 
-    st.markdown("<div class='quiz-header-row'></div>", unsafe_allow_html=True)
-    if st.button(ICONS["home"], key="quiz_home_button"):
-        stop_applause()
-        st.session_state.screen = "home"
-        st.rerun()
-    if st.button(
-        ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"],
-        key="quiz_sound_button",
-    ):
-        st.session_state.bgm_enabled = not st.session_state.bgm_enabled
-        st.rerun()
+    hdr_l, _, hdr_r = st.columns([2, 6, 2])
+    with hdr_l:
+        if st.button(ICONS["home"], key="quiz_home_button", use_container_width=True):
+            stop_applause()
+            st.session_state.screen = "home"
+            st.rerun()
+    with hdr_r:
+        if st.button(
+            ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"],
+            key="quiz_sound_button",
+            use_container_width=True,
+        ):
+            st.session_state.bgm_enabled = not st.session_state.bgm_enabled
+            st.rerun()
 
     score_label = "Số câu đúng" if lang == "vi" else "Correct answers"
     st.markdown(
@@ -754,24 +757,25 @@ def render_quiz():
             st.session_state.feedback_spoken_index = st.session_state.index
 
     if st.session_state.answer_locked:
-        st.markdown("<div class='quiz-next-row'></div>", unsafe_allow_html=True)
-        if st.button(ICONS["next"], key=f"next_{st.session_state.index}", type="primary"):
-            st.session_state.score += st.session_state.pending_score_increment
-            st.session_state.pending_score_increment = 0
-            st.session_state.last_message = ""
-            st.session_state.last_audio_message = ""
-            st.session_state.last_type = ""
-            st.session_state.feedback_spoken_index = -1
-            st.session_state.index += 1
-            st.session_state.answer_locked = False
-            st.session_state.selected_option_index = -1
-            st.session_state.question_had_wrong_attempt = False
-            st.session_state.question_scored = False
-            st.session_state.pending_score_increment = 0
-            st.session_state.replay_count = 0  # reset for next question
-            if st.session_state.index >= len(st.session_state.round):
-                st.session_state.screen = "result"
-            st.rerun()
+        _, col_next = st.columns([5, 1])
+        with col_next:
+            if st.button(ICONS["next"], key=f"next_{st.session_state.index}", type="primary", use_container_width=True):
+                st.session_state.score += st.session_state.pending_score_increment
+                st.session_state.pending_score_increment = 0
+                st.session_state.last_message = ""
+                st.session_state.last_audio_message = ""
+                st.session_state.last_type = ""
+                st.session_state.feedback_spoken_index = -1
+                st.session_state.index += 1
+                st.session_state.answer_locked = False
+                st.session_state.selected_option_index = -1
+                st.session_state.question_had_wrong_attempt = False
+                st.session_state.question_scored = False
+                st.session_state.pending_score_increment = 0
+                st.session_state.replay_count = 0
+                if st.session_state.index >= len(st.session_state.round):
+                    st.session_state.screen = "result"
+                st.rerun()
 
 
 def render_result():
@@ -1001,56 +1005,36 @@ def main():
                 color: #1f2937;
                 box-shadow: none;
             }
-            div[data-testid="stButton"] button[aria-label="🏠"],
-            div[data-testid="stButton"] button[aria-label="🔊"],
-            div[data-testid="stButton"] button[aria-label="🔇"] {
-                height: 60px;
-                width: 60px;
-                min-width: 60px;
-                font-size: 2rem;
-                border-radius: 999px;
-                background: transparent;
-                color: #4A90D9;
+            /* Icon buttons — broad selectors survive Streamlit DOM changes */
+            button[aria-label="🏠"],
+            div[data-testid="stButton"] button[aria-label="🏠"] {
+                height: 64px !important;
+                border-radius: 14px !important;
+                font-size: 2rem !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
             }
+            button[aria-label="🔊"],
+            button[aria-label="🔇"],
             div[data-testid="stButton"] button[aria-label="🔊"],
             div[data-testid="stButton"] button[aria-label="🔇"] {
+                height: 64px !important;
+                border-radius: 14px !important;
+                font-size: 2rem !important;
                 background: #FFFFFF !important;
                 border: 2.5px solid #4A90D9 !important;
                 box-shadow: 0 2px 8px rgba(74, 144, 217, 0.18) !important;
             }
-            .quiz-header-row {
-                height: 76px;
-                width: 100%;
-            }
-            .quiz-next-row {
-                height: 72px;
-                width: 100%;
-            }
-            div[data-testid="stButton"]:has(button[aria-label="🏠"]) {
-                position: fixed !important;
-                top: max(env(safe-area-inset-top), 10px) !important;
-                left: max(env(safe-area-inset-left), 14px) !important;
-                width: 60px !important;
-                height: 60px !important;
-                z-index: 9999 !important;
-            }
-            div[data-testid="stButton"]:has(button[aria-label="🔊"]),
-            div[data-testid="stButton"]:has(button[aria-label="🔇"]) {
-                position: fixed !important;
-                top: max(env(safe-area-inset-top), 10px) !important;
-                right: max(env(safe-area-inset-right), 14px) !important;
-                width: 60px !important;
-                height: 60px !important;
-                z-index: 9999 !important;
-            }
+            button[aria-label^="🎧"],
             div[data-testid="stButton"] button[aria-label^="🎧"] {
-                background: linear-gradient(90deg, #5B9BD5 0%, #4A7FC1 100%);
-                color: #FFF1C2;
-                border: none;
-                height: 64px;
-                font-size: 1.2rem;
-                border-radius: 12px;
-                box-shadow: none;
+                background: linear-gradient(90deg, #5B9BD5 0%, #4A7FC1 100%) !important;
+                color: #FFF1C2 !important;
+                border: none !important;
+                height: 64px !important;
+                font-size: 1.2rem !important;
+                border-radius: 12px !important;
+                box-shadow: none !important;
                 margin: 0 0 0.45rem 0;
             }
             div[data-testid="stButton"]:has(button[aria-label="⁣"]),
@@ -1060,69 +1044,20 @@ def main():
             div[data-testid="stButton"] button[kind="secondary"]:hover {
                 border: none;
             }
-            /* Primary Next button */
-            .stButton button[kind="primary"] {
-                background: #EF4444;
-                color: #FFFFFF;
-                font-size: 2rem;
-                font-weight: 800;
-                line-height: 1;
-                height: 56px;
-                width: 56px;
-                min-width: 56px;
-                border-radius: 999px;
-                padding: 0;
-                border: none;
-                box-shadow: none;
-            }
-            div[data-testid="stButton"]:has(button[aria-label="➤"]) {
-                position: fixed !important;
-                right: max(env(safe-area-inset-right), 16px) !important;
-                bottom: max(env(safe-area-inset-bottom), 16px) !important;
-                width: 56px !important;
-                height: 56px !important;
-                z-index: 9999 !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] {
-                display: flex !important;
-                flex-wrap: nowrap !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-                min-width: 0 !important;
-                width: auto !important;
-                flex: 0 0 auto !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
-                margin-right: auto !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                margin-left: auto !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
-                display: none !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] {
-                display: flex !important;
-                flex-wrap: nowrap !important;
-                align-items: flex-end !important;
-                justify-content: flex-end !important;
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-                min-width: 0 !important;
-                width: auto !important;
-                flex: 0 0 auto !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                margin-left: auto !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
-                display: none !important;
+            /* Primary Next button — broad selectors */
+            button[data-testid="baseButton-primary"],
+            .stButton button[kind="primary"],
+            button[kind="primary"] {
+                background: #EF4444 !important;
+                color: #FFFFFF !important;
+                font-size: 2rem !important;
+                font-weight: 800 !important;
+                line-height: 1 !important;
+                height: 64px !important;
+                border-radius: 14px !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
             }
             /* Images */
             div[data-testid="stImage"] img {
@@ -1141,29 +1076,21 @@ def main():
                 div[data-testid="stVerticalBlock"] {
                     gap: 0.4rem;
                 }
+                button[data-testid="baseButton-primary"],
                 .stButton button[kind="primary"] {
-                    height: 56px;
-                    width: 56px;
-                    min-width: 56px;
-                    font-size: 2rem;
+                    height: 56px !important;
+                    font-size: 1.8rem !important;
                 }
-                div[data-testid="stButton"] button[aria-label="🏠"],
-                div[data-testid="stButton"] button[aria-label="🔊"],
-                div[data-testid="stButton"] button[aria-label="🔇"] {
-                    height: 60px;
-                    width: 60px;
-                    min-width: 60px;
-                    font-size: 2rem;
+                button[aria-label="🏠"],
+                button[aria-label="🔊"],
+                button[aria-label="🔇"] {
+                    height: 56px !important;
+                    font-size: 1.8rem !important;
                 }
-                div[data-testid="stButton"]:has(button[aria-label="🏠"]),
-                div[data-testid="stButton"]:has(button[aria-label="🔊"]),
-                div[data-testid="stButton"]:has(button[aria-label="🔇"]) {
-                    width: 60px !important;
-                    height: 60px !important;
-                }
+                button[aria-label^="🎧"],
                 div[data-testid="stButton"] button[aria-label^="🎧"] {
-                    height: 64px;
-                    font-size: 1.2rem;
+                    height: 60px !important;
+                    font-size: 1.1rem;
                     margin-bottom: 0.35rem;
                 }
                 .quiz-score {
@@ -1221,13 +1148,8 @@ def main():
                 .home-action-buttons + div[data-testid="stHorizontalBlock"] button {
                     min-height: 52px;
                 }
+                button[data-testid="baseButton-primary"],
                 .stButton button[kind="primary"] {
-                    height: 52px;
-                    width: 52px;
-                    min-width: 52px;
-                }
-                div[data-testid="stButton"]:has(button[aria-label="➤"]) {
-                    width: 52px !important;
                     height: 52px !important;
                 }
                 .quiz-prompt {
@@ -1274,15 +1196,8 @@ def main():
                     height: 64px;
                     font-size: 1.18rem;
                 }
+                button[data-testid="baseButton-primary"],
                 .stButton button[kind="primary"] {
-                    height: 58px;
-                    width: 58px;
-                    min-width: 58px;
-                }
-                div[data-testid="stButton"]:has(button[aria-label="➤"]) {
-                    right: max(env(safe-area-inset-right), 18px) !important;
-                    bottom: max(env(safe-area-inset-bottom), 20px) !important;
-                    width: 58px !important;
                     height: 58px !important;
                 }
                 .result-stats {
