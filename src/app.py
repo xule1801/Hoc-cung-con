@@ -630,12 +630,9 @@ def grade_feedback(score: int, lang: str) -> str:
 def render_parent_guide():
     lang = st.session_state.lang
     t = LANG[lang]
-    st.markdown("<div class='guide-screen'>", unsafe_allow_html=True)
     st.markdown(f"<h2 class='guide-title'>📘 {t['parent_guide_title']}</h2>", unsafe_allow_html=True)
-    st.markdown("<div class='guide-content'>", unsafe_allow_html=True)
     for item in t["parent_guide_items"]:
         st.markdown(f"<p class='guide-item'>{item}</p>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -647,13 +644,11 @@ def render_parent_guide():
         if st.button("🚀 " + t["start"], use_container_width=True):
             start_round()
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_home():
     lang = st.session_state.lang
     t = LANG[lang]
-    st.markdown("<div class='home-screen'>", unsafe_allow_html=True)
     st.markdown(f"<h2 class='home-title'>🌈 {t['app_name']}</h2>", unsafe_allow_html=True)
     st.markdown(f"<p class='home-subtitle'>{t['subtitle']}</p>", unsafe_allow_html=True)
 
@@ -686,7 +681,6 @@ def render_home():
         if st.button("👨‍👩‍👧 " + t["guide"], use_container_width=True):
             st.session_state.screen = "guide"
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_quiz():
@@ -868,7 +862,6 @@ def render_result():
     score = st.session_state.score
     wrong = 10 - score
 
-    st.markdown("<div class='result-screen'>", unsafe_allow_html=True)
     st.markdown(f"<h2 class='result-title'>🏁 {t['result']}</h2>", unsafe_allow_html=True)
     st.markdown(
         (
@@ -904,7 +897,6 @@ def render_result():
             stop_applause()
             st.session_state.screen = "home"
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def main():
@@ -968,35 +960,12 @@ def main():
                 font-size: var(--font-xs);
                 line-height: 1.3;
             }
-            .home-screen {
-                min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                overflow: hidden;
-            }
-            .guide-screen, .result-screen {
-                min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                overflow: hidden;
-            }
             .guide-title, .result-title {
                 margin: 0.2rem 0 0.3rem 0 !important;
                 text-align: center;
                 line-height: 1.15;
                 font-size: var(--font-lg) !important;
                 color: #1f2937;
-            }
-            .guide-content {
-                flex: 1;
-                overflow: hidden;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                gap: var(--space-1);
-                padding: 0 6px;
             }
             .guide-item {
                 margin: 0;
@@ -1146,26 +1115,28 @@ def main():
                 border: none;
                 box-shadow: none;
             }
-            .quiz-header-row + div[data-testid="stHorizontalBlock"] {
+            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] {
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 align-items: center !important;
             }
-            .quiz-header-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
                 min-width: 0 !important;
+                width: auto !important;
             }
-            .quiz-next-row + div[data-testid="stHorizontalBlock"] {
+            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] {
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 align-items: flex-end !important;
             }
-            .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
                 min-width: 0 !important;
+                width: auto !important;
             }
-            .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
+            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
                 flex: 1 1 auto !important;
             }
-            .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
                 flex: 0 0 64px !important;
                 max-width: 64px !important;
                 margin-left: auto !important;
@@ -1189,7 +1160,7 @@ def main():
                     min-width: 56px;
                     font-size: 2rem;
                 }
-                .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
                     flex: 0 0 56px !important;
                     max-width: 56px !important;
                 }
@@ -1252,9 +1223,6 @@ def main():
                     font-size: 1.15rem !important;
                     margin-bottom: 0.2rem !important;
                 }
-                .guide-content {
-                    gap: 0.1rem;
-                }
                 .guide-item,
                 .result-stats,
                 .result-feedback {
@@ -1269,7 +1237,7 @@ def main():
                     width: 52px;
                     min-width: 52px;
                 }
-                .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
                     flex: 0 0 52px !important;
                     max-width: 52px !important;
                 }
@@ -1320,7 +1288,7 @@ def main():
                     width: 58px;
                     min-width: 58px;
                 }
-                .quiz-next-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
                     flex: 0 0 58px !important;
                     max-width: 58px !important;
                 }
