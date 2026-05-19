@@ -20,5 +20,12 @@ Ví dụ đường dẫn tải:
   - `assets/images/letters/`
 - Mục đích: bảo đảm mọi đáp án hiển thị bằng hình ảnh cho trẻ nhỏ.
 
+### 3) Wikimedia Commons
+- File: `assets/audio/applause.ogg`
+- Nguồn: https://commons.wikimedia.org/wiki/File:Applause.ogg
+- License: CC BY-SA 3.0
+- Mục đích: âm thanh vỗ tay khoảng 10 giây khi bé hoàn thành 10 câu hỏi.
+
 ## Ghi chú pháp lý
 - Khi phát hành công khai, cần giữ attribution OpenMoji theo yêu cầu CC BY-SA 4.0.
+- Khi dùng `assets/audio/applause.ogg`, cần giữ attribution Wikimedia Commons theo yêu cầu CC BY-SA 3.0.

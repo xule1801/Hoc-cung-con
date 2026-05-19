@@ -1,6 +1,7 @@
 import random
 import base64
 import mimetypes
+import json
 from pathlib import Path
 
 import streamlit as st
@@ -40,7 +41,7 @@ def render_bgm():
             audio.id = "my-bgm";
             audio.src = "data:audio/mp3;base64,{b64}";
             audio.loop = true;
-            audio.volume = 0.4;
+            audio.volume = 0.18;
             parentDoc.body.appendChild(audio);
             
             var playPromise = audio.play();
@@ -58,15 +59,19 @@ def render_bgm():
 
 
 def render_fireworks():
-    applause_path = AUDIO_DIR / "applause.mp3"
+    applause_path = AUDIO_DIR / "applause.ogg"
+    applause_mime = "audio/ogg"
+    if not applause_path.exists():
+        applause_path = AUDIO_DIR / "applause.mp3"
+        applause_mime = "audio/mpeg"
     audio_js = ""
     if applause_path.exists():
         b64 = base64.b64encode(applause_path.read_bytes()).decode()
         audio_js = f"""
         var parentDoc = window.parent.document;
         var audio = parentDoc.createElement("audio");
-        audio.src = "data:audio/mp3;base64,{b64}";
-        audio.volume = 0.8;
+        audio.src = "data:{applause_mime};base64,{b64}";
+        audio.volume = 0.9;
         audio.loop = true;
         parentDoc.body.appendChild(audio);
         var playPromise = audio.play();
@@ -90,6 +95,57 @@ def render_fireworks():
     </script>
     """
     st.components.v1.html(html_str, width=0, height=0)
+
+
+def render_speech_button(text: str, lang: str, label: str, enabled: bool) -> None:
+    if not enabled:
+        return
+    lang_code = "vi-VN" if lang == "vi" else "en-US"
+    text_json = json.dumps(text, ensure_ascii=False)
+    lang_json = json.dumps(lang_code)
+    label_json = json.dumps(label, ensure_ascii=False)
+    html_str = f"""
+    <button id="speak-btn" type="button"></button>
+    <script>
+      const btn = document.getElementById("speak-btn");
+      btn.textContent = {label_json};
+      btn.style.width = "100%";
+      btn.style.height = "44px";
+      btn.style.border = "0";
+      btn.style.borderRadius = "0 0 18px 18px";
+      btn.style.background = "linear-gradient(135deg, #67E8F9 0%, #60A5FA 100%)";
+      btn.style.color = "#1f2937";
+      btn.style.fontSize = "20px";
+      btn.style.fontWeight = "700";
+      btn.style.cursor = "pointer";
+      btn.onclick = function() {{
+        let synth = window.speechSynthesis;
+        try {{
+          synth = synth || window.parent.speechSynthesis;
+        }} catch (e) {{}}
+        if (!synth) return;
+        const speakNow = function() {{
+          synth.cancel();
+          const utterance = new SpeechSynthesisUtterance({text_json});
+          utterance.lang = {lang_json};
+          utterance.rate = 0.86;
+          utterance.pitch = 1.05;
+          const voices = synth.getVoices ? synth.getVoices() : [];
+          const voice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith({lang_json}.slice(0, 2).toLowerCase()));
+          if (voice) utterance.voice = voice;
+          synth.speak(utterance);
+        }};
+        const voices = synth.getVoices ? synth.getVoices() : [];
+        if (voices.length === 0 && "onvoiceschanged" in synth) {{
+          synth.onvoiceschanged = speakNow;
+          setTimeout(speakNow, 250);
+        }} else {{
+          speakNow();
+        }}
+      }};
+    </script>
+    """
+    components.html(html_str, height=46, scrolling=False)
 
 
 
@@ -493,15 +549,18 @@ def render_quiz():
         """,
         unsafe_allow_html=True,
     )
-    if st.button("🔁 " + t["replay_audio"], use_container_width=True):
-        speak(q["prompt"], lang, st.session_state.sound)
-        st.session_state.answer_locked = False
-        st.session_state.selected_option_index = -1
-        st.session_state.last_message = ""
-        st.session_state.last_type = ""
-        st.session_state.replay_count += 1
-        st.session_state.feedback_spoken_index = -1
-        st.rerun()
+
+    c_sound, c_replay, c_home = st.columns([0.9, 3.2, 0.9])
+    with c_sound:
+        if st.button("🔊" if st.session_state.sound else "🔇", use_container_width=True):
+            st.session_state.sound = not st.session_state.sound
+            st.rerun()
+    with c_replay:
+        render_speech_button(q["prompt"], lang, "🔁 " + t["replay_audio"], st.session_state.sound)
+    with c_home:
+        if st.button("🏠", use_container_width=True):
+            st.session_state.screen = "home"
+            st.rerun()
 
     st.markdown(f"<h3 class='quiz-prompt'>{q['prompt']}</h3>", unsafe_allow_html=True)
 
@@ -700,10 +759,13 @@ def main():
                 align-items: center;
                 font-weight: 800;
                 font-size: clamp(0.95rem, 2.8vw, 1.2rem);
-                min-height: 34px;
+                min-height: 32px;
                 line-height: 1;
-                padding: 0.15rem 0 0.25rem 0;
-                margin: 0;
+                padding: 0.25rem 0.55rem;
+                margin: 0 0 0.15rem 0;
+                background: #fff7ed;
+                border: 1px solid #fed7aa;
+                border-radius: 12px;
             }
             .home-title {
                 text-align: center;
@@ -739,11 +801,11 @@ def main():
                 text-align: center;
                 font-size: clamp(1.6rem, 5vw, 2.4rem);
                 line-height: 1;
-                height: 2.4rem;
+                height: 3.2rem;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin: 0.15rem 0 0.25rem 0;
+                margin: 0.3rem 0 0.45rem 0;
                 overflow: visible;
             }
             /* General buttons */
@@ -800,9 +862,10 @@ def main():
                     font-size: 0.98rem;
                 }
                 .quiz-topbar {
-                    min-height: 28px;
+                    min-height: 26px;
                     font-size: 0.9rem;
-                    padding: 0.05rem 0 0.15rem 0;
+                    padding: 0.2rem 0.45rem;
+                    margin-bottom: 0.1rem;
                 }
                 .quiz-prompt {
                     font-size: 1.12rem !important;
@@ -839,8 +902,8 @@ def main():
                 }
                 .audio-feedback {
                     font-size: 1.35rem;
-                    height: 1.8rem;
-                    margin: 0.05rem 0 0.15rem 0;
+                    height: 2.4rem;
+                    margin: 0.18rem 0 0.28rem 0;
                 }
             }
         </style>
