@@ -912,6 +912,11 @@ def main():
             }
             .stApp {
                 background-color: #FAF9F6;
+                overflow-x: hidden !important;
+            }
+            html, body, [data-testid="stAppViewContainer"], .main {
+                overflow-x: hidden !important;
+                max-width: 100vw !important;
             }
             :root {
                 --space-1: 4px;
@@ -928,7 +933,7 @@ def main():
             }
             .main .block-container {
                 max-width: 100% !important;
-                padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
+                padding: max(env(safe-area-inset-top), 6px) max(env(safe-area-inset-right), 6px) max(env(safe-area-inset-bottom), 6px) max(env(safe-area-inset-left), 6px) !important;
                 height: 100dvh !important;
                 min-height: 100dvh !important;
                 overflow: hidden !important;
@@ -1119,15 +1124,33 @@ def main():
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 align-items: center !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
                 min-width: 0 !important;
                 width: auto !important;
             }
+            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
+                flex: 0 0 60px !important;
+                max-width: 60px !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
+                flex: 1 1 auto !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                flex: 0 0 60px !important;
+                max-width: 60px !important;
+                margin-left: auto !important;
+            }
             div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] {
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 align-items: flex-end !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
                 min-width: 0 !important;
@@ -1146,10 +1169,19 @@ def main():
                 border-radius: 14px;
                 display: block;
             }
+            iframe {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
             @media (max-width: 768px) {
                 .block-container {
                     padding-top: env(safe-area-inset-top);
                     padding-bottom: env(safe-area-inset-bottom);
+                }
+                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child,
+                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                    flex: 0 0 56px !important;
+                    max-width: 56px !important;
                 }
                 div[data-testid="stVerticalBlock"] {
                     gap: 0.4rem;
@@ -1237,6 +1269,11 @@ def main():
                     width: 52px;
                     min-width: 52px;
                 }
+                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child,
+                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                    flex: 0 0 52px !important;
+                    max-width: 52px !important;
+                }
                 div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
                     flex: 0 0 52px !important;
                     max-width: 52px !important;
@@ -1287,6 +1324,11 @@ def main():
                     height: 58px;
                     width: 58px;
                     min-width: 58px;
+                }
+                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child,
+                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                    flex: 0 0 58px !important;
+                    max-width: 58px !important;
                 }
                 div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
                     flex: 0 0 58px !important;
