@@ -41,16 +41,27 @@ def render_bgm():
 
 
 def render_fireworks():
-    html_str = """
+    applause_path = AUDIO_DIR / "applause.mp3"
+    audio_html = ""
+    if applause_path.exists():
+        b64 = base64.b64encode(applause_path.read_bytes()).decode()
+        audio_html = f"""
+        <audio autoplay>
+            <source src="data:audio/mp3;base64,{b64}" type="audio/mpeg">
+        </audio>
+        """
+        
+    html_str = f"""
+    {audio_html}
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
       var duration = 3 * 1000;
       var end = Date.now() + duration;
-      (function frame() {
-        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'] });
-        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'] });
-        if (Date.now() < end) { requestAnimationFrame(frame); }
-      }());
+      (function frame() {{
+        confetti({{ particleCount: 5, angle: 60, spread: 55, origin: {{ x: 0 }}, colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'] }});
+        confetti({{ particleCount: 5, angle: 120, spread: 55, origin: {{ x: 1 }}, colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'] }});
+        if (Date.now() < end) {{ requestAnimationFrame(frame); }}
+      }}());
     </script>
     """
     st.components.v1.html(html_str, width=0, height=0)
