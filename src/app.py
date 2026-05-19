@@ -1,8 +1,14 @@
 import random
+import base64
+import mimetypes
 from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
+try:
+    from st_clickable_images import clickable_images
+except ModuleNotFoundError:
+    clickable_images = None
 
 
 ASSET_DIR = Path(__file__).resolve().parent.parent / "assets" / "images"
@@ -10,6 +16,15 @@ ASSET_DIR = Path(__file__).resolve().parent.parent / "assets" / "images"
 
 def img(path: str) -> str:
     return str(ASSET_DIR / path)
+
+
+def to_data_uri(path: str) -> str:
+    mime, _ = mimetypes.guess_type(path)
+    if mime is None:
+        mime = "image/png"
+    data = Path(path).read_bytes()
+    encoded = base64.b64encode(data).decode("utf-8")
+    return f"data:{mime};base64,{encoded}"
 
 
 
@@ -415,66 +430,91 @@ def render_quiz():
         st.session_state.last_spoken_index = st.session_state.index
 
     # ── Image choice grid ──────────────────────────────────────────────────
-    n = len(q["options"])
-    col_pairs = [st.columns(2) for _ in range((n + 1) // 2)]
-
-    for i in range(n):
-        row_idx = i // 2
-        col_idx = i % 2
-        opt_label = q["options"][i]
-        img_path = q["option_images"][i]
-
-        with col_pairs[row_idx][col_idx]:
-            locked = st.session_state.answer_locked
-
-            if locked:
-                # Show result feedback colours
-                selected = st.session_state.selected_option_index == i
-                is_correct = opt_label == q["correct"]
-                if selected and is_correct:
-                    border = "6px solid #22C55E"
-                    bg = "#F0FDF4"
-                elif selected:
-                    border = "6px solid #EF4444"
-                    bg = "#FEF2F2"
-                elif is_correct:
-                    border = "6px solid #22C55E"
-                    bg = "#F0FDF4"
-                else:
-                    border = "6px solid #E5E7EB"
-                    bg = "#FFFFFF"
+    if st.session_state.answer_locked:
+        # POST-ANSWER: show 2×2 grid with green/red border feedback
+        col_pairs = [st.columns(2) for _ in range(2)]
+        for i in range(len(q["options"])):
+            opt_label = q["options"][i]
+            img_path = q["option_images"][i]
+            selected = st.session_state.selected_option_index == i
+            is_correct = opt_label == q["correct"]
+            if selected and is_correct:
+                border, bg = "6px solid #22C55E", "#F0FDF4"
+            elif selected:
+                border, bg = "6px solid #EF4444", "#FEF2F2"
+            elif is_correct:
+                border, bg = "6px solid #22C55E", "#F0FDF4"
+            else:
+                border, bg = "6px solid #E5E7EB", "#FFFFFF"
+            with col_pairs[i // 2][i % 2]:
                 st.markdown(
                     f'<div style="border:{border};border-radius:18px;background:{bg};padding:4px;box-shadow:0 4px 14px rgba(0,0,0,0.10);">',
                     unsafe_allow_html=True,
                 )
                 st.image(img_path, use_container_width=True)
                 st.markdown("</div>", unsafe_allow_html=True)
-            else:
-                # Before any choice — plain card, no colour hint
-                st.markdown(
-                    '<div style="border:4px solid #D1D5DB;border-radius:18px;background:#FFFFFF;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,0.08);">',
-                    unsafe_allow_html=True,
-                )
-                st.image(img_path, use_container_width=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-                # Tap button — the ONLY way selection is registered
-                if st.button(
-                    "👆 Chọn" if lang == "vi" else "👆 Choose",
-                    key=f"choice_{st.session_state.index}_{i}",
-                    use_container_width=True,
-                ):
-                    st.session_state.selected_option_index = i
-                    st.session_state.answer_locked = True
-                    if opt_label == q["correct"]:
-                        st.session_state.score += 1
-                        st.session_state.last_message = random.choice(t["correct"])
-                        st.session_state.last_type = "success"
-                    else:
-                        st.session_state.last_message = (
-                            f"{random.choice(t['wrong'])} ({q['correct']})"
-                        )
-                        st.session_state.last_type = "warning"
-                    st.rerun()
+    else:
+        # PRE-ANSWER: images are directly clickable via streamlit-clickable-images
+        if clickable_images is not None:
+            image_uris = [to_data_uri(p) for p in q["option_images"]]
+            selected_idx = clickable_images(
+                image_uris,
+                titles=[""] * 4,
+                div_style={
+                    "display": "grid",
+                    "grid-template-columns": "1fr 1fr",
+                    "gap": "14px",
+                    "padding": "4px",
+                },
+                img_style={
+                    "width": "100%",
+                    "border-radius": "16px",
+                    "cursor": "pointer",
+                    "border": "4px solid #D1D5DB",
+                    "box-shadow": "0 4px 14px rgba(0,0,0,0.10)",
+                    "transition": "transform 0.12s ease, box-shadow 0.12s ease",
+                },
+                key=f"img_click_{st.session_state.index}",
+            )
+            if selected_idx > -1:
+                st.session_state.selected_option_index = selected_idx
+                st.session_state.answer_locked = True
+                opt_label = q["options"][selected_idx]
+                if opt_label == q["correct"]:
+                    st.session_state.score += 1
+                    st.session_state.last_message = random.choice(t["correct"])
+                    st.session_state.last_type = "success"
+                else:
+                    st.session_state.last_message = (
+                        f"{random.choice(t['wrong'])} ({q['correct']})"
+                    )
+                    st.session_state.last_type = "warning"
+                st.rerun()
+        else:
+            # Safe fallback — st.button + st.image (no auto-selection possible)
+            col_pairs = [st.columns(2) for _ in range(2)]
+            for i in range(len(q["options"])):
+                opt_label = q["options"][i]
+                img_path = q["option_images"][i]
+                with col_pairs[i // 2][i % 2]:
+                    st.image(img_path, use_container_width=True)
+                    if st.button(
+                        "👆 Chọn" if lang == "vi" else "👆 Choose",
+                        key=f"choice_{st.session_state.index}_{i}",
+                        use_container_width=True,
+                    ):
+                        st.session_state.selected_option_index = i
+                        st.session_state.answer_locked = True
+                        if opt_label == q["correct"]:
+                            st.session_state.score += 1
+                            st.session_state.last_message = random.choice(t["correct"])
+                            st.session_state.last_type = "success"
+                        else:
+                            st.session_state.last_message = (
+                                f"{random.choice(t['wrong'])} ({q['correct']})"
+                            )
+                            st.session_state.last_type = "warning"
+                        st.rerun()
 
     # ── Feedback & next button ──────────────────────────────────────────────
     if st.session_state.last_message:
