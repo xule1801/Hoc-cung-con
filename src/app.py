@@ -28,30 +28,42 @@ def to_data_uri(path: str) -> str:
     return f"data:{mime};base64,{encoded}"
 
 
-def render_bgm():
+def render_bgm(enabled: bool = True):
     bgm_path = AUDIO_DIR / "bgm.mp3"
+    if not enabled:
+        st.components.v1.html(
+            """
+            <script>
+                var audio = window.parent.document.getElementById("my-bgm");
+                if (audio) { audio.pause(); }
+            </script>
+            """,
+            width=0,
+            height=0,
+        )
+        return
     if not bgm_path.exists():
         return
     b64 = base64.b64encode(bgm_path.read_bytes()).decode()
     html_str = f"""
     <script>
         var parentDoc = window.parent.document;
-        if (!parentDoc.getElementById("my-bgm")) {{
-            var audio = parentDoc.createElement("audio");
+        var audio = parentDoc.getElementById("my-bgm");
+        if (!audio) {{
+            audio = parentDoc.createElement("audio");
             audio.id = "my-bgm";
             audio.src = "data:audio/mp3;base64,{b64}";
             audio.loop = true;
-            audio.volume = 0.18;
             parentDoc.body.appendChild(audio);
-            
-            var playPromise = audio.play();
-            if (playPromise !== undefined) {{
-                playPromise.catch(function(error) {{
-                    parentDoc.addEventListener("click", function() {{
-                        audio.play();
-                    }}, {{once: true}});
-                }});
-            }}
+        }}
+        audio.volume = 0.18;
+        var playPromise = audio.play();
+        if (playPromise !== undefined) {{
+            playPromise.catch(function(error) {{
+                parentDoc.addEventListener("click", function() {{
+                    audio.play();
+                }}, {{once: true}});
+            }});
         }}
     </script>
     """
@@ -164,7 +176,7 @@ LANG = {
         "progress": "Câu",
         "score": "Điểm",
         "replay_audio": "Nghe lại câu hỏi",
-        "sound_on": "Âm thanh bật",
+        "sound_on": "Nhạc nền bật",
         "sound_off": "Âm thanh tắt",
         "select": "Chọn",
         "next_question": "Câu tiếp theo",
@@ -206,7 +218,7 @@ LANG = {
         "progress": "Question",
         "score": "Score",
         "replay_audio": "Replay question",
-        "sound_on": "Sound on",
+        "sound_on": "Background music on",
         "sound_off": "Sound off",
         "select": "Select",
         "next_question": "Next question",
@@ -443,7 +455,8 @@ def init_state():
     st.session_state.setdefault("screen", "home")
     st.session_state.setdefault("lang", "vi")
     st.session_state.setdefault("topic", "colors")
-    st.session_state.setdefault("sound", True)
+    if "bgm_enabled" not in st.session_state:
+        st.session_state.bgm_enabled = st.session_state.get("sound", True)
     st.session_state.setdefault("round", [])
     st.session_state.setdefault("index", 0)
     st.session_state.setdefault("score", 0)
@@ -453,6 +466,8 @@ def init_state():
     st.session_state.setdefault("feedback_spoken_index", -1)
     st.session_state.setdefault("answer_locked", False)
     st.session_state.setdefault("selected_option_index", -1)
+    st.session_state.setdefault("question_had_wrong_attempt", False)
+    st.session_state.setdefault("question_scored", False)
     st.session_state.setdefault("replay_count", 0)
     st.session_state.setdefault("celebrated", False)
 
@@ -467,9 +482,30 @@ def start_round():
     st.session_state.feedback_spoken_index = -1
     st.session_state.answer_locked = False
     st.session_state.selected_option_index = -1
+    st.session_state.question_had_wrong_attempt = False
+    st.session_state.question_scored = False
     st.session_state.replay_count = 0
     st.session_state.celebrated = False
     st.session_state.screen = "quiz"
+
+
+def handle_choice(selected_idx: int, q: dict, t: dict) -> None:
+    opt_label = q["options"][selected_idx]
+    st.session_state.selected_option_index = selected_idx
+    st.session_state.answer_locked = True
+    if opt_label == q["correct"]:
+        if (
+            not st.session_state.question_had_wrong_attempt
+            and not st.session_state.question_scored
+        ):
+            st.session_state.score += 1
+            st.session_state.question_scored = True
+        st.session_state.last_message = random.choice(t["correct"])
+        st.session_state.last_type = "success"
+    else:
+        st.session_state.question_had_wrong_attempt = True
+        st.session_state.last_message = f"{random.choice(t['wrong'])} ({q['correct']})"
+        st.session_state.last_type = "warning"
 
 
 def grade_feedback(score: int, lang: str) -> str:
@@ -521,7 +557,10 @@ def render_home():
     )
     st.session_state.topic = selected
 
-    st.session_state.sound = st.toggle("🔊 " + t["sound_on"], value=st.session_state.sound)
+    st.session_state.bgm_enabled = st.toggle(
+        "🎵 " + t["sound_on"],
+        value=st.session_state.bgm_enabled,
+    )
 
     c1, c2 = st.columns(2)
     with c1:
@@ -540,32 +579,37 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     current = st.session_state.index + 1
 
-    st.markdown(
-        f"""
-        <div class="quiz-topbar">
-            <span>{t['score']}: {st.session_state.score}</span>
-            <span>{current}/10</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    c_sound, c_replay, c_home = st.columns([0.9, 3.2, 0.9])
-    with c_sound:
-        if st.button("🔊" if st.session_state.sound else "🔇", use_container_width=True):
-            st.session_state.sound = not st.session_state.sound
-            st.rerun()
-    with c_replay:
-        render_speech_button(q["prompt"], lang, "🔁 " + t["replay_audio"], st.session_state.sound)
+    c_home, c_space, c_sound = st.columns([1, 3.2, 1])
     with c_home:
         if st.button("🏠", use_container_width=True):
             st.session_state.screen = "home"
             st.rerun()
+    with c_sound:
+        if st.button("🔊" if st.session_state.bgm_enabled else "🔇", use_container_width=True):
+            st.session_state.bgm_enabled = not st.session_state.bgm_enabled
+            st.rerun()
+
+    score_label = "Số câu đúng" if lang == "vi" else "Correct answers"
+    st.markdown(
+        f"<div class='quiz-score'>{score_label}: {st.session_state.score}/{current}</div>",
+        unsafe_allow_html=True,
+    )
+
+    if st.button("🎧 " + t["replay_audio"], key=f"replay_{st.session_state.index}", use_container_width=True):
+        speak(q["prompt"], lang, True)
+        if st.session_state.answer_locked and st.session_state.last_type == "warning":
+            st.session_state.answer_locked = False
+            st.session_state.selected_option_index = -1
+            st.session_state.last_message = ""
+            st.session_state.last_type = ""
+            st.session_state.feedback_spoken_index = -1
+        st.session_state.replay_count += 1
+        st.rerun()
 
     st.markdown(f"<h3 class='quiz-prompt'>{q['prompt']}</h3>", unsafe_allow_html=True)
 
     if st.session_state.last_spoken_index != st.session_state.index:
-        speak(q["prompt"], lang, st.session_state.sound)
+        speak(q["prompt"], lang, True)
         st.session_state.last_spoken_index = st.session_state.index
 
     # ── Image choice grid ──────────────────────────────────────────────────
@@ -645,18 +689,7 @@ def render_quiz():
                 key=f"img_click_{st.session_state.index}_{st.session_state.replay_count}",
             )
             if selected_idx > -1:
-                st.session_state.selected_option_index = selected_idx
-                st.session_state.answer_locked = True
-                opt_label = q["options"][selected_idx]
-                if opt_label == q["correct"]:
-                    st.session_state.score += 1
-                    st.session_state.last_message = random.choice(t["correct"])
-                    st.session_state.last_type = "success"
-                else:
-                    st.session_state.last_message = (
-                        f"{random.choice(t['wrong'])} ({q['correct']})"
-                    )
-                    st.session_state.last_type = "warning"
+                handle_choice(selected_idx, q, t)
                 st.rerun()
         else:
             # Safe fallback — st.button + st.image (no auto-selection possible)
@@ -671,39 +704,31 @@ def render_quiz():
                         key=f"choice_{st.session_state.index}_{i}",
                         use_container_width=True,
                     ):
-                        st.session_state.selected_option_index = i
-                        st.session_state.answer_locked = True
-                        if opt_label == q["correct"]:
-                            st.session_state.score += 1
-                            st.session_state.last_message = random.choice(t["correct"])
-                            st.session_state.last_type = "success"
-                        else:
-                            st.session_state.last_message = (
-                                f"{random.choice(t['wrong'])} ({q['correct']})"
-                            )
-                            st.session_state.last_type = "warning"
+                        handle_choice(i, q, t)
                         st.rerun()
 
     # ── Feedback & next button ──────────────────────────────────────────────
     if st.session_state.last_message:
         if st.session_state.feedback_spoken_index != st.session_state.index:
-            speak(st.session_state.last_message, lang, st.session_state.sound)
+            speak(st.session_state.last_message, lang, True)
             st.session_state.feedback_spoken_index = st.session_state.index
-        feedback_icon = "🎉" if st.session_state.last_type == "success" else "💪"
-        st.markdown(f"<div class='audio-feedback'>{feedback_icon}</div>", unsafe_allow_html=True)
 
     if st.session_state.answer_locked:
-        if st.button("➡️ " + t["next_question"], use_container_width=True, type="primary"):
-            st.session_state.last_message = ""
-            st.session_state.last_type = ""
-            st.session_state.feedback_spoken_index = -1
-            st.session_state.index += 1
-            st.session_state.answer_locked = False
-            st.session_state.selected_option_index = -1
-            st.session_state.replay_count = 0  # reset for next question
-            if st.session_state.index >= len(st.session_state.round):
-                st.session_state.screen = "result"
-            st.rerun()
+        next_left, next_button, next_right = st.columns([3.2, 1.15, 0.45])
+        with next_button:
+            if st.button("›", key=f"next_{st.session_state.index}", use_container_width=True, type="primary"):
+                st.session_state.last_message = ""
+                st.session_state.last_type = ""
+                st.session_state.feedback_spoken_index = -1
+                st.session_state.index += 1
+                st.session_state.answer_locked = False
+                st.session_state.selected_option_index = -1
+                st.session_state.question_had_wrong_attempt = False
+                st.session_state.question_scored = False
+                st.session_state.replay_count = 0  # reset for next question
+                if st.session_state.index >= len(st.session_state.round):
+                    st.session_state.screen = "result"
+                st.rerun()
 
 
 def render_result():
@@ -741,13 +766,18 @@ def render_result():
 
 def main():
     st.set_page_config(page_title="Học Cùng Con", page_icon="🌈", layout="centered")
-    render_bgm()
+    init_state()
+    render_bgm(st.session_state.bgm_enabled)
     st.markdown(
         """
         <style>
+            header[data-testid="stHeader"], #MainMenu, footer {
+                visibility: hidden;
+                height: 0;
+            }
             /* Reduce Streamlit container padding for mobile */
             .block-container {
-                padding-top: 0.6rem;
+                padding-top: 1.2rem;
                 padding-bottom: 0.5rem;
             }
             div[data-testid="stVerticalBlock"] {
@@ -767,6 +797,13 @@ def main():
                 border: 1px solid #fed7aa;
                 border-radius: 12px;
             }
+            .quiz-score {
+                color: #11B85A;
+                font-size: clamp(1.45rem, 5.6vw, 2.5rem);
+                font-weight: 700;
+                line-height: 1.1;
+                margin: 0.35rem 0 1.05rem 0;
+            }
             .home-title {
                 text-align: center;
                 margin: 0.1rem 0 0.2rem 0 !important;
@@ -774,7 +811,7 @@ def main():
             }
             .quiz-prompt {
                 text-align: center;
-                margin: 0.1rem 0 0.3rem 0 !important;
+                margin: 1.15rem 0 0.35rem 0 !important;
                 line-height: 1.15;
                 font-size: clamp(1.1rem, 4vw, 1.55rem) !important;
             }
@@ -815,27 +852,48 @@ def main():
                 border-radius: 14px;
                 font-weight: 600;
             }
-            /* Choice buttons (👆 Chọn) — make them friendly and large */
             div[data-testid="stButton"] button[kind="secondary"] {
-                background: linear-gradient(135deg, #6EE7F7 0%, #60A5FA 100%);
-                color: #1e3a5f;
+                background: transparent;
                 border: none;
-                height: 52px;
-                font-size: 1.1rem;
-                border-radius: 0 0 14px 14px;
-                margin-top: 0px;
+                color: #1f2937;
+                box-shadow: none;
+            }
+            div[data-testid="stButton"] button[aria-label="🏠"],
+            div[data-testid="stButton"] button[aria-label="🔊"],
+            div[data-testid="stButton"] button[aria-label="🔇"] {
+                height: 74px;
+                font-size: 2.6rem;
+                border-radius: 999px;
+                background: transparent;
+                color: #38A7FF;
+            }
+            div[data-testid="stButton"] button[aria-label^="🎧"] {
+                background: #6D9DF0;
+                color: #FFE6A8;
+                border: none;
+                height: 62px;
+                font-size: 2.15rem;
+                border-radius: 10px;
+                box-shadow: none;
+                margin: 0 0 0.45rem 0;
             }
             div[data-testid="stButton"] button[kind="secondary"]:hover {
-                background: linear-gradient(135deg, #38BDF8 0%, #3B82F6 100%);
-                transform: scale(1.03);
-                transition: 0.15s ease;
+                border: none;
             }
             /* Primary Next button */
             .stButton button[kind="primary"] {
-                background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
-                color: white;
-                font-size: 1.05rem;
-                height: 46px;
+                background: linear-gradient(180deg, #FF0050 0%, #D8003B 100%);
+                color: #CFE2FF;
+                font-size: 5rem;
+                font-weight: 800;
+                line-height: 0.75;
+                height: 96px;
+                width: 96px;
+                min-width: 96px;
+                border-radius: 999px;
+                padding: 0 0 0.65rem 0;
+                border: none;
+                box-shadow: inset 0 -18px 0 rgba(120,0,30,0.18);
             }
             /* Images */
             div[data-testid="stImage"] img {
@@ -844,22 +902,40 @@ def main():
             }
             @media (max-width: 768px) {
                 .block-container {
-                    padding-left: 0.7rem;
-                    padding-right: 0.7rem;
-                    padding-top: 0.35rem;
+                    padding-left: 0.2rem;
+                    padding-right: 0.2rem;
+                    padding-top: 1.85rem;
                     padding-bottom: 0.25rem;
                 }
                 div[data-testid="stVerticalBlock"] {
                     gap: 0.25rem;
                 }
                 .stButton button {
-                    height: 38px;
+                    height: 36px;
                     font-size: 0.92rem;
                     padding: 0.2rem 0.55rem;
                 }
                 .stButton button[kind="primary"] {
-                    height: 42px;
-                    font-size: 0.98rem;
+                    height: 92px;
+                    width: 92px;
+                    min-width: 92px;
+                    font-size: 4.8rem;
+                }
+                div[data-testid="stButton"] button[aria-label="🏠"],
+                div[data-testid="stButton"] button[aria-label="🔊"],
+                div[data-testid="stButton"] button[aria-label="🔇"] {
+                    height: 76px;
+                    font-size: 2.75rem;
+                }
+                div[data-testid="stButton"] button[aria-label^="🎧"] {
+                    height: 58px;
+                    font-size: 2rem;
+                    margin-bottom: 0.35rem;
+                }
+                .quiz-score {
+                    font-size: 1.95rem;
+                    margin: 0.2rem 0 0.85rem 0;
+                    padding-left: 0.6rem;
                 }
                 .quiz-topbar {
                     min-height: 26px;
@@ -868,8 +944,8 @@ def main():
                     margin-bottom: 0.1rem;
                 }
                 .quiz-prompt {
-                    font-size: 1.12rem !important;
-                    margin: 0 !important;
+                    font-size: 1.35rem !important;
+                    margin: 0.95rem 0 0.25rem 0 !important;
                 }
                 .answer-grid {
                     gap: 6px;
@@ -892,13 +968,23 @@ def main():
                     font-size: 0.88rem;
                 }
                 .stButton button[kind="primary"] {
-                    height: 38px;
+                    height: 84px;
+                    width: 84px;
+                    min-width: 84px;
                 }
                 .quiz-prompt {
-                    font-size: 1rem !important;
+                    font-size: 1.15rem !important;
                 }
                 .answer-card img {
                     height: clamp(66px, 18vh, 118px);
+                }
+                .quiz-score {
+                    font-size: 1.55rem;
+                    margin-bottom: 0.55rem;
+                }
+                div[data-testid="stButton"] button[aria-label^="🎧"] {
+                    height: 50px;
+                    font-size: 1.6rem;
                 }
                 .audio-feedback {
                     font-size: 1.35rem;
@@ -910,8 +996,6 @@ def main():
         """,
         unsafe_allow_html=True,
     )
-    init_state()
-
     if st.session_state.screen == "home":
         render_home()
     elif st.session_state.screen == "guide":
