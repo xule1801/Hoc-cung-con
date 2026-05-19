@@ -614,7 +614,8 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     completed = st.session_state.index
 
-    _, col_home, col_sound = st.columns([5, 3, 2])
+    st.markdown("<div class='quiz-top-actions'></div>", unsafe_allow_html=True)
+    _, col_home, col_sound = st.columns([5, 3, 1])
     with col_home:
         if st.button(t["home"], key="quiz_home_button", use_container_width=True):
             stop_applause()
@@ -1010,25 +1011,52 @@ def main():
             button[aria-label="Home"],
             div[data-testid="stButton"] button[aria-label="Trang chủ"],
             div[data-testid="stButton"] button[aria-label="Home"] {
-                height: 48px !important;
-                border-radius: 12px !important;
-                font-size: 0.9rem !important;
-                font-weight: 700 !important;
-                background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+                height: 56px !important;
+                width: 150px !important;
+                border-radius: 8px !important;
+                font-size: 1.35rem !important;
+                font-weight: 800 !important;
+                background: #0678C9 !important;
                 color: #FFFFFF !important;
                 border: none !important;
-                box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25) !important;
+                box-shadow: none !important;
+                padding: 0 18px !important;
             }
             button[aria-label="🔊"],
             button[aria-label="🔇"],
             div[data-testid="stButton"] button[aria-label="🔊"],
             div[data-testid="stButton"] button[aria-label="🔇"] {
-                height: 48px !important;
-                border-radius: 12px !important;
-                font-size: 1.6rem !important;
-                background: #FFFFFF !important;
-                border: 2.5px solid #4A90D9 !important;
-                box-shadow: 0 2px 8px rgba(74, 144, 217, 0.18) !important;
+                height: 56px !important;
+                border-radius: 0 !important;
+                font-size: 2rem !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: flex-end !important;
+                flex-wrap: nowrap !important;
+                gap: 2px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+                min-width: 0 !important;
+                width: auto !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
+                flex: 1 1 auto !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
+                flex: 0 0 150px !important;
+                max-width: 150px !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+                flex: 0 0 44px !important;
+                max-width: 44px !important;
             }
             button[aria-label^="🎧"],
             div[data-testid="stButton"] button[aria-label^="🎧"] {
@@ -1087,8 +1115,8 @@ def main():
                 }
                 button[aria-label="🔊"],
                 button[aria-label="🔇"] {
-                    height: 48px !important;
-                    font-size: 1.8rem !important;
+                    height: 56px !important;
+                    font-size: 2rem !important;
                 }
                 button[aria-label^="🎧"],
                 div[data-testid="stButton"] button[aria-label^="🎧"] {
