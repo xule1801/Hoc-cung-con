@@ -615,16 +615,16 @@ def render_quiz():
     completed = st.session_state.index
 
     st.markdown("<div class='quiz-header-row'></div>", unsafe_allow_html=True)
-    c_home, c_space, c_sound = st.columns([1, 3.2, 1], vertical_alignment="center")
-    with c_home:
-        if st.button(ICONS["home"], use_container_width=True):
-            stop_applause()
-            st.session_state.screen = "home"
-            st.rerun()
-    with c_sound:
-        if st.button(ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"], use_container_width=True):
-            st.session_state.bgm_enabled = not st.session_state.bgm_enabled
-            st.rerun()
+    if st.button(ICONS["home"], key="quiz_home_button"):
+        stop_applause()
+        st.session_state.screen = "home"
+        st.rerun()
+    if st.button(
+        ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"],
+        key="quiz_sound_button",
+    ):
+        st.session_state.bgm_enabled = not st.session_state.bgm_enabled
+        st.rerun()
 
     score_label = "Số câu đúng" if lang == "vi" else "Correct answers"
     st.markdown(
@@ -755,25 +755,23 @@ def render_quiz():
 
     if st.session_state.answer_locked:
         st.markdown("<div class='quiz-next-row'></div>", unsafe_allow_html=True)
-        next_left, next_button = st.columns([5.0, 1.0], vertical_alignment="bottom")
-        with next_button:
-            if st.button(ICONS["next"], key=f"next_{st.session_state.index}", use_container_width=True, type="primary"):
-                st.session_state.score += st.session_state.pending_score_increment
-                st.session_state.pending_score_increment = 0
-                st.session_state.last_message = ""
-                st.session_state.last_audio_message = ""
-                st.session_state.last_type = ""
-                st.session_state.feedback_spoken_index = -1
-                st.session_state.index += 1
-                st.session_state.answer_locked = False
-                st.session_state.selected_option_index = -1
-                st.session_state.question_had_wrong_attempt = False
-                st.session_state.question_scored = False
-                st.session_state.pending_score_increment = 0
-                st.session_state.replay_count = 0  # reset for next question
-                if st.session_state.index >= len(st.session_state.round):
-                    st.session_state.screen = "result"
-                st.rerun()
+        if st.button(ICONS["next"], key=f"next_{st.session_state.index}", type="primary"):
+            st.session_state.score += st.session_state.pending_score_increment
+            st.session_state.pending_score_increment = 0
+            st.session_state.last_message = ""
+            st.session_state.last_audio_message = ""
+            st.session_state.last_type = ""
+            st.session_state.feedback_spoken_index = -1
+            st.session_state.index += 1
+            st.session_state.answer_locked = False
+            st.session_state.selected_option_index = -1
+            st.session_state.question_had_wrong_attempt = False
+            st.session_state.question_scored = False
+            st.session_state.pending_score_increment = 0
+            st.session_state.replay_count = 0  # reset for next question
+            if st.session_state.index >= len(st.session_state.round):
+                st.session_state.screen = "result"
+            st.rerun()
 
 
 def render_result():
@@ -1008,6 +1006,31 @@ def main():
                 background: transparent;
                 color: #4A90D9;
             }
+            .quiz-header-row {
+                height: 76px;
+                width: 100%;
+            }
+            .quiz-next-row {
+                height: 72px;
+                width: 100%;
+            }
+            div[data-testid="stButton"]:has(button[aria-label="🏠"]) {
+                position: fixed !important;
+                top: max(env(safe-area-inset-top), 10px) !important;
+                left: max(env(safe-area-inset-left), 14px) !important;
+                width: 60px !important;
+                height: 60px !important;
+                z-index: 9999 !important;
+            }
+            div[data-testid="stButton"]:has(button[aria-label="🔊"]),
+            div[data-testid="stButton"]:has(button[aria-label="🔇"]) {
+                position: fixed !important;
+                top: max(env(safe-area-inset-top), 10px) !important;
+                right: max(env(safe-area-inset-right), 14px) !important;
+                width: 60px !important;
+                height: 60px !important;
+                z-index: 9999 !important;
+            }
             div[data-testid="stButton"] button[aria-label^="🎧"] {
                 background: linear-gradient(90deg, #5B9BD5 0%, #4A7FC1 100%);
                 color: #FFF1C2;
@@ -1039,6 +1062,14 @@ def main():
                 padding: 0;
                 border: none;
                 box-shadow: none;
+            }
+            div[data-testid="stButton"]:has(button[aria-label="➤"]) {
+                position: fixed !important;
+                right: max(env(safe-area-inset-right), 16px) !important;
+                bottom: max(env(safe-area-inset-bottom), 16px) !important;
+                width: 56px !important;
+                height: 56px !important;
+                z-index: 9999 !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] {
                 display: flex !important;
@@ -1112,6 +1143,12 @@ def main():
                     min-width: 60px;
                     font-size: 2rem;
                 }
+                div[data-testid="stButton"]:has(button[aria-label="🏠"]),
+                div[data-testid="stButton"]:has(button[aria-label="🔊"]),
+                div[data-testid="stButton"]:has(button[aria-label="🔇"]) {
+                    width: 60px !important;
+                    height: 60px !important;
+                }
                 div[data-testid="stButton"] button[aria-label^="🎧"] {
                     height: 64px;
                     font-size: 1.2rem;
@@ -1177,6 +1214,10 @@ def main():
                     width: 52px;
                     min-width: 52px;
                 }
+                div[data-testid="stButton"]:has(button[aria-label="➤"]) {
+                    width: 52px !important;
+                    height: 52px !important;
+                }
                 .quiz-prompt {
                     font-size: 0.95rem !important;
                 }
@@ -1223,6 +1264,12 @@ def main():
                     height: 58px;
                     width: 58px;
                     min-width: 58px;
+                }
+                div[data-testid="stButton"]:has(button[aria-label="➤"]) {
+                    right: max(env(safe-area-inset-right), 18px) !important;
+                    bottom: max(env(safe-area-inset-bottom), 18px) !important;
+                    width: 58px !important;
+                    height: 58px !important;
                 }
                 .result-stats {
                     gap: 5px;
