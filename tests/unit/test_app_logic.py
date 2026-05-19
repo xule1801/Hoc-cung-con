@@ -14,6 +14,7 @@ streamlit_mod = types.ModuleType("streamlit")
 streamlit_mod.session_state = {}
 streamlit_mod.set_page_config = lambda *args, **kwargs: None
 streamlit_mod.markdown = lambda *args, **kwargs: None
+streamlit_mod.cache_data = lambda *args, **kwargs: lambda f: f
 
 components_pkg = types.ModuleType("streamlit.components")
 components_v1_mod = types.ModuleType("streamlit.components.v1")

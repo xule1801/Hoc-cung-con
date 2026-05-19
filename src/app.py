@@ -1,6 +1,7 @@
 import random
 import base64
 import mimetypes
+import requests
 from pathlib import Path
 
 import streamlit as st
@@ -284,23 +285,73 @@ def topic_label(topic_key: str, lang: str) -> str:
     return f"{item['icon']} {item['vi_name'] if lang == 'vi' else item['en_name']}"
 
 
+@st.cache_data(show_spinner=False)
+def get_azure_tts_audio(text: str, lang: str) -> str:
+    """Fetch TTS audio from Azure and return as base64 string. Returns None on failure."""
+    try:
+        if "AZURE_SPEECH_KEY" not in st.secrets or "AZURE_SPEECH_REGION" not in st.secrets:
+            return None
+            
+        speech_key = st.secrets["AZURE_SPEECH_KEY"]
+        service_region = st.secrets["AZURE_SPEECH_REGION"]
+        
+        url = f"https://{service_region}.tts.speech.microsoft.com/cognitiveservices/v1"
+        headers = {
+            "Ocp-Apim-Subscription-Key": speech_key,
+            "Content-Type": "application/ssml+xml",
+            "X-Microsoft-OutputFormat": "audio-16khz-32kbitrate-mono-mp3"
+        }
+        
+        voice_name = "vi-VN-HoaiMyNeural" if lang == "vi" else "en-US-JennyNeural"
+        lang_code = "vi-VN" if lang == "vi" else "en-US"
+        
+        ssml = f"""<speak version='1.0' xml:lang='{lang_code}'>
+            <voice xml:lang='{lang_code}' xml:gender='Female' name='{voice_name}'>
+                {text}
+            </voice>
+        </speak>"""
+        
+        response = requests.post(url, headers=headers, data=ssml.encode('utf-8'))
+        if response.status_code == 200:
+            return base64.b64encode(response.content).decode("utf-8")
+        else:
+            print(f"Azure TTS Error: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"Azure TTS Exception: {e}")
+        return None
+
+
 def speak(text: str, lang: str, enabled: bool) -> None:
     if not enabled:
         return
-    lang_code = "vi-VN" if lang == "vi" else "en-US"
-    safe = text.replace("'", "\\'")
-    components.html(
-        f"""
-        <script>
-            const u = new SpeechSynthesisUtterance('{safe}');
-            u.lang = '{lang_code}';
-            u.rate = 0.9;
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(u);
-        </script>
-        """,
-        height=0,
-    )
+        
+    audio_b64 = get_azure_tts_audio(text, lang)
+    
+    if audio_b64:
+        components.html(
+            f"""
+            <audio autoplay>
+                <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mpeg">
+            </audio>
+            """,
+            height=0,
+        )
+    else:
+        lang_code = "vi-VN" if lang == "vi" else "en-US"
+        safe = text.replace("'", "\\'")
+        components.html(
+            f"""
+            <script>
+                const u = new SpeechSynthesisUtterance('{safe}');
+                u.lang = '{lang_code}';
+                u.rate = 0.9;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(u);
+            </script>
+            """,
+            height=0,
+        )
 
 
 def get_topic_pool(topic: str, lang: str):
