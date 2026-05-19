@@ -615,7 +615,7 @@ def render_quiz():
     completed = st.session_state.index
 
     st.markdown("<div class='quiz-top-actions'></div>", unsafe_allow_html=True)
-    _, col_home, col_sound = st.columns([5, 3, 1])
+    col_home, col_sound = st.columns([150, 44], gap="small")
     with col_home:
         if st.button(t["home"], key="quiz_home_button", use_container_width=True):
             stop_applause()
@@ -1048,9 +1048,6 @@ def main():
                 width: auto !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
-                flex: 1 1 auto !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
                 flex: 0 0 150px !important;
                 max-width: 150px !important;
             }
