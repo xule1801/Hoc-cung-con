@@ -18,12 +18,19 @@ streamlit_mod.markdown = lambda *args, **kwargs: None
 components_pkg = types.ModuleType("streamlit.components")
 components_v1_mod = types.ModuleType("streamlit.components.v1")
 components_v1_mod.html = lambda *args, **kwargs: None
+components_v1_mod.declare_component = lambda *args, **kwargs: lambda *args, **kwargs: -1
 components_pkg.v1 = components_v1_mod
 streamlit_mod.components = components_pkg
 
 sys.modules.setdefault("streamlit", streamlit_mod)
 sys.modules.setdefault("streamlit.components", components_pkg)
 sys.modules.setdefault("streamlit.components.v1", components_v1_mod)
+fake_image_select_mod = types.ModuleType("streamlit_image_select")
+fake_image_select_mod.image_select = lambda *args, **kwargs: 0
+sys.modules.setdefault("streamlit_image_select", fake_image_select_mod)
+fake_clickable_mod = types.ModuleType("st_clickable_images")
+fake_clickable_mod.clickable_images = lambda *args, **kwargs: -1
+sys.modules.setdefault("st_clickable_images", fake_clickable_mod)
 
 import app  # noqa: E402
 

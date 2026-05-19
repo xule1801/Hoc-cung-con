@@ -6,7 +6,7 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 try:
-    from st_clickable_images import clickable_images
+    from streamlit_clickable_images import clickable_images
 except ModuleNotFoundError:
     clickable_images = None
 
@@ -426,7 +426,11 @@ def render_quiz():
 
     if st.button("🔁 " + t["replay_audio"], use_container_width=True):
         speak(q["prompt"], lang, st.session_state.sound)
-        # Force clickable_images to remount fresh (clear stale click state)
+        # Force fresh choices and allow user to try again
+        st.session_state.answer_locked = False
+        st.session_state.selected_option_index = -1
+        st.session_state.last_message = ""
+        st.session_state.last_type = ""
         st.session_state.replay_count += 1
         st.rerun()
 
@@ -436,7 +440,7 @@ def render_quiz():
 
     # ── Image choice grid ──────────────────────────────────────────────────
     if st.session_state.answer_locked:
-        # POST-ANSWER: show 2×2 grid with green/red border feedback
+        # POST-ANSWER: show 2×2 grid with green/red border feedback via HTML
         col_pairs = [st.columns(2) for _ in range(2)]
         for i in range(len(q["options"])):
             opt_label = q["options"][i]
@@ -452,12 +456,15 @@ def render_quiz():
             else:
                 border, bg = "6px solid #E5E7EB", "#FFFFFF"
             with col_pairs[i // 2][i % 2]:
+                b64_uri = to_data_uri(img_path)
                 st.markdown(
-                    f'<div style="border:{border};border-radius:18px;background:{bg};padding:4px;box-shadow:0 4px 14px rgba(0,0,0,0.10);">',
+                    f'''
+                    <div style="border:{border}; border-radius:18px; background:{bg}; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.10); margin-bottom:14px;">
+                        <img src="{b64_uri}" style="width:100%; border-radius:14px; display:block;">
+                    </div>
+                    ''',
                     unsafe_allow_html=True,
                 )
-                st.image(img_path, use_container_width=True)
-                st.markdown("</div>", unsafe_allow_html=True)
     else:
         # PRE-ANSWER: images are directly clickable via streamlit-clickable-images
         if clickable_images is not None:
