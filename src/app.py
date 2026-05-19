@@ -486,22 +486,26 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     current = st.session_state.index + 1
 
-    st.subheader(f"{t['progress']} {current}/10")
-    st.progress(current / 10)
-    st.write(f"**{t['score']}: {st.session_state.score}**")
-    st.markdown(f"### {q['prompt']}")
-    st.caption(t["tap_hint"])
+    # Top header: Progress + Score + Replay Button
+    c1, c2, c3 = st.columns([1.5, 1, 1])
+    with c1:
+        st.markdown(f"**🏅 {t['score']}: {st.session_state.score}**")
+    with c2:
+        st.markdown(f"**🎯 {current}/10**")
+    with c3:
+        if st.button("🔁 " + t["replay_audio"], use_container_width=True):
+            speak(q["prompt"], lang, st.session_state.sound)
+            # Force fresh choices and allow user to try again
+            st.session_state.answer_locked = False
+            st.session_state.selected_option_index = -1
+            st.session_state.last_message = ""
+            st.session_state.last_type = ""
+            st.session_state.replay_count += 1
+            st.session_state.feedback_spoken_index = -1
+            st.rerun()
 
-    if st.button("🔁 " + t["replay_audio"], use_container_width=True):
-        speak(q["prompt"], lang, st.session_state.sound)
-        # Force fresh choices and allow user to try again
-        st.session_state.answer_locked = False
-        st.session_state.selected_option_index = -1
-        st.session_state.last_message = ""
-        st.session_state.last_type = ""
-        st.session_state.replay_count += 1
-        st.session_state.feedback_spoken_index = -1
-        st.rerun()
+    st.progress(current / 10)
+    st.markdown(f"<h3 style='text-align: center; margin-top: -10px;'>{q['prompt']}</h3>", unsafe_allow_html=True)
 
     if st.session_state.last_spoken_index != st.session_state.index:
         speak(q["prompt"], lang, st.session_state.sound)
@@ -510,7 +514,7 @@ def render_quiz():
     # ── Image choice grid ──────────────────────────────────────────────────
     if st.session_state.answer_locked:
         # POST-ANSWER: show 2×2 grid with green/red border feedback via HTML
-        col_pairs = [st.columns(2) for _ in range(2)]
+        grid_html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 4px;">'
         for i in range(len(q["options"])):
             opt_label = q["options"][i]
             img_path = q["option_images"][i]
@@ -524,16 +528,15 @@ def render_quiz():
                 border, bg = "6px solid #22C55E", "#F0FDF4"
             else:
                 border, bg = "6px solid #E5E7EB", "#FFFFFF"
-            with col_pairs[i // 2][i % 2]:
-                b64_uri = to_data_uri(img_path)
-                st.markdown(
-                    f'''
-                    <div style="border:{border}; border-radius:18px; background:{bg}; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.10); margin-bottom:14px;">
-                        <img src="{b64_uri}" style="width:100%; border-radius:14px; display:block;">
-                    </div>
-                    ''',
-                    unsafe_allow_html=True,
-                )
+            
+            b64_uri = to_data_uri(img_path)
+            grid_html += f'''
+            <div style="border:{border}; border-radius:18px; background:{bg}; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.10);">
+                <img src="{b64_uri}" style="width:100%; border-radius:14px; display:block;">
+            </div>
+            '''
+        grid_html += '</div>'
+        st.markdown(grid_html, unsafe_allow_html=True)
     else:
         # PRE-ANSWER: images are directly clickable via streamlit-clickable-images
         if clickable_images is not None:
@@ -668,6 +671,11 @@ def main():
     st.markdown(
         """
         <style>
+            /* Reduce Streamlit container padding for mobile */
+            .block-container {
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+            }
             /* General buttons */
             .stButton button {
                 height: 52px;
