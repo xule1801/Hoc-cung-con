@@ -615,20 +615,16 @@ def render_quiz():
     completed = st.session_state.index
 
     st.markdown("<div class='quiz-top-actions'></div>", unsafe_allow_html=True)
-    col_home, col_sound = st.columns([150, 44], gap="small")
-    with col_home:
-        if st.button(t["home"], key="quiz_home_button", use_container_width=True):
-            stop_applause()
-            st.session_state.screen = "home"
-            st.rerun()
-    with col_sound:
-        if st.button(
-            ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"],
-            key="quiz_sound_button",
-            use_container_width=True,
-        ):
-            st.session_state.bgm_enabled = not st.session_state.bgm_enabled
-            st.rerun()
+    if st.button(t["home"], key="quiz_home_button"):
+        stop_applause()
+        st.session_state.screen = "home"
+        st.rerun()
+    if st.button(
+        ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"],
+        key="quiz_sound_button",
+    ):
+        st.session_state.bgm_enabled = not st.session_state.bgm_enabled
+        st.rerun()
 
     score_label = "Số câu đúng" if lang == "vi" else "Correct answers"
     st.markdown(
@@ -1034,26 +1030,25 @@ def main():
                 box-shadow: none !important;
                 padding: 0 !important;
             }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: flex-end !important;
-                flex-wrap: nowrap !important;
-                gap: 2px !important;
-                width: 100% !important;
-                max-width: 100% !important;
+            .quiz-top-actions {
+                height: 64px;
+                width: 100%;
             }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-                min-width: 0 !important;
-                width: auto !important;
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stButton"] {
+                position: fixed !important;
+                top: max(env(safe-area-inset-top), 14px) !important;
+                right: calc(max(env(safe-area-inset-right), 14px) + 46px) !important;
+                width: 150px !important;
+                height: 56px !important;
+                z-index: 9999 !important;
             }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
-                flex: 0 0 150px !important;
-                max-width: 150px !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                flex: 0 0 44px !important;
-                max-width: 44px !important;
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stButton"] + div[data-testid="stButton"] {
+                position: fixed !important;
+                top: max(env(safe-area-inset-top), 14px) !important;
+                right: max(env(safe-area-inset-right), 14px) !important;
+                width: 44px !important;
+                height: 56px !important;
+                z-index: 9999 !important;
             }
             button[aria-label^="🎧"],
             div[data-testid="stButton"] button[aria-label^="🎧"] {
