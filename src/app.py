@@ -1124,45 +1124,42 @@ def main():
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 align-items: center !important;
+                justify-content: space-between !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                overflow: hidden !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
                 min-width: 0 !important;
                 width: auto !important;
+                flex: 0 0 auto !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
-                flex: 0 0 60px !important;
-                max-width: 60px !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
-                flex: 1 1 auto !important;
+                margin-right: auto !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                flex: 0 0 60px !important;
-                max-width: 60px !important;
                 margin-left: auto !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
+                display: none !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] {
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 align-items: flex-end !important;
+                justify-content: flex-end !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                overflow: hidden !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
                 min-width: 0 !important;
                 width: auto !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
-                flex: 1 1 auto !important;
+                flex: 0 0 auto !important;
             }
             div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                flex: 0 0 64px !important;
-                max-width: 64px !important;
                 margin-left: auto !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child {
+                display: none !important;
             }
             /* Images */
             div[data-testid="stImage"] img {
@@ -1178,11 +1175,6 @@ def main():
                     padding-top: env(safe-area-inset-top);
                     padding-bottom: env(safe-area-inset-bottom);
                 }
-                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child,
-                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                    flex: 0 0 56px !important;
-                    max-width: 56px !important;
-                }
                 div[data-testid="stVerticalBlock"] {
                     gap: 0.4rem;
                 }
@@ -1191,10 +1183,6 @@ def main():
                     width: 56px;
                     min-width: 56px;
                     font-size: 2rem;
-                }
-                div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                    flex: 0 0 56px !important;
-                    max-width: 56px !important;
                 }
                 div[data-testid="stButton"] button[aria-label="🏠"],
                 div[data-testid="stButton"] button[aria-label="🔊"],
@@ -1269,15 +1257,6 @@ def main():
                     width: 52px;
                     min-width: 52px;
                 }
-                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child,
-                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                    flex: 0 0 52px !important;
-                    max-width: 52px !important;
-                }
-                div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                    flex: 0 0 52px !important;
-                    max-width: 52px !important;
-                }
                 .quiz-prompt {
                     font-size: 0.95rem !important;
                 }
@@ -1324,15 +1303,6 @@ def main():
                     height: 58px;
                     width: 58px;
                     min-width: 58px;
-                }
-                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child,
-                div[data-testid="stElementContainer"]:has(.quiz-header-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                    flex: 0 0 58px !important;
-                    max-width: 58px !important;
-                }
-                div[data-testid="stElementContainer"]:has(.quiz-next-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-                    flex: 0 0 58px !important;
-                    max-width: 58px !important;
                 }
                 .result-stats {
                     gap: 5px;
