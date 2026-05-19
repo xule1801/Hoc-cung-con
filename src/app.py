@@ -33,28 +33,52 @@ def render_bgm():
         return
     b64 = base64.b64encode(bgm_path.read_bytes()).decode()
     html_str = f"""
-    <audio autoplay loop>
-        <source src="data:audio/mp3;base64,{b64}" type="audio/mpeg">
-    </audio>
+    <script>
+        var parentDoc = window.parent.document;
+        if (!parentDoc.getElementById("my-bgm")) {{
+            var audio = parentDoc.createElement("audio");
+            audio.id = "my-bgm";
+            audio.src = "data:audio/mp3;base64,{b64}";
+            audio.loop = true;
+            audio.volume = 0.4;
+            parentDoc.body.appendChild(audio);
+            
+            var playPromise = audio.play();
+            if (playPromise !== undefined) {{
+                playPromise.catch(function(error) {{
+                    parentDoc.addEventListener("click", function() {{
+                        audio.play();
+                    }}, {{once: true}});
+                }});
+            }}
+        }}
+    </script>
     """
     st.components.v1.html(html_str, width=0, height=0)
 
 
 def render_fireworks():
     applause_path = AUDIO_DIR / "applause.mp3"
-    audio_html = ""
+    audio_js = ""
     if applause_path.exists():
         b64 = base64.b64encode(applause_path.read_bytes()).decode()
-        audio_html = f"""
-        <audio autoplay>
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mpeg">
-        </audio>
+        audio_js = f"""
+        var parentDoc = window.parent.document;
+        var audio = parentDoc.createElement("audio");
+        audio.src = "data:audio/mp3;base64,{b64}";
+        audio.volume = 0.8;
+        parentDoc.body.appendChild(audio);
+        var playPromise = audio.play();
+        if (playPromise !== undefined) {{
+            playPromise.catch(function(e) {{ console.log(e); }});
+        }}
+        setTimeout(function() {{ audio.remove(); }}, 10000);
         """
         
     html_str = f"""
-    {audio_html}
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
+      {audio_js}
       var duration = 3 * 1000;
       var end = Date.now() + duration;
       (function frame() {{
