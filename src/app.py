@@ -10,6 +10,7 @@ from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
+from icons_config import ICONS
 try:
     from streamlit_clickable_images import clickable_images
 except ModuleNotFoundError:
@@ -215,13 +216,17 @@ def render_speech_button(
       }};
       btn.textContent = {label_json};
       btn.style.width = "100%";
-      btn.style.height = "62px";
+      btn.style.height = "64px";
       btn.style.border = "0";
-      btn.style.borderRadius = "10px";
-      btn.style.background = "#6D9DF0";
-      btn.style.color = "#FFE6A8";
-      btn.style.fontSize = "34px";
+      btn.style.borderRadius = "12px";
+      btn.style.background = "linear-gradient(90deg, #5B9BD5 0%, #4A7FC1 100%)";
+      btn.style.color = "#FFF1C2";
+      btn.style.fontSize = "clamp(1.1rem, 4.2vw, 1.3rem)";
       btn.style.fontWeight = "700";
+      btn.style.display = "flex";
+      btn.style.alignItems = "center";
+      btn.style.justifyContent = "center";
+      btn.style.gap = "8px";
       btn.style.cursor = "pointer";
       btn.onclick = function() {{
         let parentDoc = document;
@@ -625,9 +630,12 @@ def grade_feedback(score: int, lang: str) -> str:
 def render_parent_guide():
     lang = st.session_state.lang
     t = LANG[lang]
-    st.title("📘 " + t["parent_guide_title"])
+    st.markdown("<div class='guide-screen'>", unsafe_allow_html=True)
+    st.markdown(f"<h2 class='guide-title'>📘 {t['parent_guide_title']}</h2>", unsafe_allow_html=True)
+    st.markdown("<div class='guide-content'>", unsafe_allow_html=True)
     for item in t["parent_guide_items"]:
-        st.write(item)
+        st.markdown(f"<p class='guide-item'>{item}</p>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -639,13 +647,15 @@ def render_parent_guide():
         if st.button("🚀 " + t["start"], use_container_width=True):
             start_round()
             st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_home():
     lang = st.session_state.lang
     t = LANG[lang]
+    st.markdown("<div class='home-screen'>", unsafe_allow_html=True)
     st.markdown(f"<h2 class='home-title'>🌈 {t['app_name']}</h2>", unsafe_allow_html=True)
-    st.caption(t["subtitle"])
+    st.markdown(f"<p class='home-subtitle'>{t['subtitle']}</p>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -676,6 +686,7 @@ def render_home():
         if st.button("👨‍👩‍👧 " + t["guide"], use_container_width=True):
             st.session_state.screen = "guide"
             st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_quiz():
@@ -684,14 +695,14 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     completed = st.session_state.index
 
-    c_home, c_space, c_sound = st.columns([1, 3.2, 1])
+    c_home, c_space, c_sound = st.columns([1, 3.2, 1], vertical_alignment="center")
     with c_home:
-        if st.button("🏠", use_container_width=True):
+        if st.button(ICONS["home"], use_container_width=True):
             stop_applause()
             st.session_state.screen = "home"
             st.rerun()
     with c_sound:
-        if st.button("🔊" if st.session_state.bgm_enabled else "🔇", use_container_width=True):
+        if st.button(ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"], use_container_width=True):
             st.session_state.bgm_enabled = not st.session_state.bgm_enabled
             st.rerun()
 
@@ -705,7 +716,7 @@ def render_quiz():
     render_speech_button(
         q["prompt"],
         lang,
-        "🎧 " + t["replay_audio"],
+        f"{ICONS['audio_btn']} Nghe lại" if lang == "vi" else f"{ICONS['audio_btn']} Replay",
         True,
         replay_state_label,
     )
@@ -760,13 +771,13 @@ def render_quiz():
             selected = st.session_state.selected_option_index == i
             is_correct = opt_label == q["correct"]
             if selected and is_correct:
-                border, bg = "6px solid #22C55E", "#F0FDF4"
+                border, bg = "3px solid #22C55E", "#F0FFF4"
             elif selected:
-                border, bg = "6px solid #EF4444", "#FEF2F2"
+                border, bg = "3px solid #EF4444", "#FFF5F5"
             elif is_correct:
-                border, bg = "6px solid #22C55E", "#F0FDF4"
+                border, bg = "3px solid #22C55E", "#F0FFF4"
             else:
-                border, bg = "6px solid #E5E7EB", "#FFFFFF"
+                border, bg = "1.5px solid #E5E7EB", "#FFFFFF"
             
             b64_uri = to_data_uri(img_path)
             grid_html += f'''
@@ -786,16 +797,16 @@ def render_quiz():
                 div_style={
                     "display": "grid",
                     "grid-template-columns": "1fr 1fr",
-                    "gap": "8px",
-                    "padding": "0",
+                    "gap": "12px",
+                    "padding": "0 16px",
                 },
                 img_style={
-                    "height": "clamp(82px, 21vh, 160px)",
+                    "height": "clamp(96px, 17dvh, 156px)",
                     "width": "100%",
                     "border-radius": "16px",
                     "cursor": "pointer",
-                    "border": "4px solid #D1D5DB",
-                    "box-shadow": "0 4px 14px rgba(0,0,0,0.10)",
+                    "border": "1.5px solid #E5E7EB",
+                    "box-shadow": "0 5px 12px rgba(0,0,0,0.08)",
                     "object-fit": "contain",
                     "background": "#FFFFFF",
                     "transition": "transform 0.12s ease, box-shadow 0.12s ease",
@@ -828,9 +839,9 @@ def render_quiz():
             st.session_state.feedback_spoken_index = st.session_state.index
 
     if st.session_state.answer_locked:
-        next_left, next_button, next_right = st.columns([3.2, 1.15, 0.45])
+        next_left, next_button = st.columns([5.0, 1.0], vertical_alignment="bottom")
         with next_button:
-            if st.button("›", key=f"next_{st.session_state.index}", use_container_width=True, type="primary"):
+            if st.button(ICONS["next"], key=f"next_{st.session_state.index}", use_container_width=True, type="primary"):
                 st.session_state.score += st.session_state.pending_score_increment
                 st.session_state.pending_score_increment = 0
                 st.session_state.last_message = ""
@@ -855,12 +866,20 @@ def render_result():
     score = st.session_state.score
     wrong = 10 - score
 
-    st.title("🏁 " + t["result"])
-    st.write(f"**{t['total']}: 10**")
-    st.write(f"**{t['right']}: {score}**")
-    st.write(f"**{t['wrong_count']}: {wrong}**")
-    st.write(f"**{t['score']}: {score}/10**")
-    st.info(grade_feedback(score, lang))
+    st.markdown("<div class='result-screen'>", unsafe_allow_html=True)
+    st.markdown(f"<h2 class='result-title'>🏁 {t['result']}</h2>", unsafe_allow_html=True)
+    st.markdown(
+        (
+            "<div class='result-stats'>"
+            f"<div><strong>{t['total']}:</strong> 10</div>"
+            f"<div><strong>{t['right']}:</strong> {score}</div>"
+            f"<div><strong>{t['wrong_count']}:</strong> {wrong}</div>"
+            f"<div><strong>{t['score']}:</strong> {score}/10</div>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+    st.markdown(f"<div class='result-feedback'>{grade_feedback(score, lang)}</div>", unsafe_allow_html=True)
 
     if not st.session_state.get("celebrated", False):
         st.balloons()
@@ -883,6 +902,7 @@ def render_result():
             stop_applause()
             st.session_state.screen = "home"
             st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def main():
@@ -896,83 +916,153 @@ def main():
                 visibility: hidden;
                 height: 0;
             }
-            /* Reduce Streamlit container padding for mobile */
-            .block-container {
-                padding-top: 1.2rem;
-                padding-bottom: 0.5rem;
+            .stApp {
+                background-color: #FAF9F6;
+            }
+            :root {
+                --space-1: 4px;
+                --space-2: 8px;
+                --space-3: 12px;
+                --space-4: 16px;
+                --radius-sm: 8px;
+                --radius-md: 12px;
+                --radius-lg: 16px;
+                --font-xs: clamp(0.82rem, 3vw, 0.9rem);
+                --font-sm: clamp(0.9rem, 3.2vw, 1rem);
+                --font-md: clamp(1rem, 3.8vw, 1.1rem);
+                --font-lg: clamp(1.2rem, 4.5vw, 1.7rem);
+            }
+            .main .block-container {
+                max-width: 100% !important;
+                padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
+                height: 100dvh !important;
+                min-height: 100dvh !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
             div[data-testid="stVerticalBlock"] {
-                gap: 0.35rem;
-            }
-            .quiz-topbar {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-weight: 800;
-                font-size: clamp(0.95rem, 2.8vw, 1.2rem);
-                min-height: 32px;
-                line-height: 1;
-                padding: 0.25rem 0.55rem;
-                margin: 0 0 0.15rem 0;
-                background: #fff7ed;
-                border: 1px solid #fed7aa;
-                border-radius: 12px;
+                gap: var(--space-2);
             }
             .quiz-score {
-                color: #11B85A;
-                font-size: clamp(1.45rem, 5.6vw, 2.5rem);
+                color: #2ECC71;
+                font-size: var(--font-md);
                 font-weight: 700;
                 line-height: 1.1;
-                margin: 0.35rem 0 1.05rem 0;
+                margin: 0;
+                padding: 0 var(--space-4);
             }
             .home-title {
                 text-align: center;
-                margin: 0.1rem 0 0.2rem 0 !important;
+                margin: 0.2rem 0 0.1rem 0 !important;
                 line-height: 1.1;
+                font-size: clamp(1.35rem, 5vw, 1.9rem) !important;
+            }
+            .home-subtitle {
+                text-align: center;
+                margin: 0 0 var(--space-2) 0;
+                color: #4b5563;
+                font-size: var(--font-xs);
+                line-height: 1.3;
+            }
+            .home-screen {
+                min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow: hidden;
+            }
+            .guide-screen, .result-screen {
+                min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow: hidden;
+            }
+            .guide-title, .result-title {
+                margin: 0.2rem 0 0.3rem 0 !important;
+                text-align: center;
+                line-height: 1.15;
+                font-size: var(--font-lg) !important;
+                color: #1f2937;
+            }
+            .guide-content {
+                flex: 1;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: var(--space-1);
+                padding: 0 6px;
+            }
+            .guide-item {
+                margin: 0;
+                font-size: var(--font-sm);
+                line-height: 1.32;
+                color: #374151;
+            }
+            .result-stats {
+                background: #ffffff;
+                border: 1.5px solid #f59e0b;
+                border-radius: var(--radius-md);
+                padding: 10px 12px;
+                display: grid;
+                gap: 6px;
+                color: #1f2937;
+                font-size: var(--font-sm);
+            }
+            .result-feedback {
+                margin-top: 0.35rem;
+                border-radius: var(--radius-sm);
+                background: #ecfeff;
+                border: 1px solid #67e8f9;
+                color: #155e75;
+                padding: 8px 10px;
+                font-size: var(--font-sm);
+                line-height: 1.35;
             }
             .home-action-buttons + div[data-testid="stHorizontalBlock"] button {
-                min-height: 76px;
-                border-radius: 28px;
-                border: 3px solid rgba(245, 158, 11, 0.45);
-                background:
-                    radial-gradient(circle at 18% 24%, rgba(255,255,255,0.95) 0 13%, transparent 14%),
-                    radial-gradient(circle at 88% 80%, rgba(255,255,255,0.55) 0 11%, transparent 12%),
-                    linear-gradient(135deg, #FFF2A8 0%, #FDBA74 50%, #FB7185 100%);
-                color: #1f2937;
-                font-size: clamp(1.15rem, 3vw, 1.45rem);
+                min-height: 62px;
+                border-radius: 16px;
+                border: 1.5px solid #f59e0b;
+                background: linear-gradient(180deg, #fff7d6 0%, #fde68a 100%);
+                color: #92400e;
+                font-size: clamp(0.95rem, 3.3vw, 1.1rem);
                 font-weight: 800;
-                box-shadow: 0 12px 0 #F59E0B, 0 18px 28px rgba(180, 83, 9, 0.22);
+                box-shadow: 0 6px 12px rgba(146, 64, 14, 0.12);
                 transform: translateY(0);
                 transition: transform 0.12s ease, box-shadow 0.12s ease;
             }
             .home-action-buttons + div[data-testid="stHorizontalBlock"] button:hover {
-                border-color: rgba(245, 158, 11, 0.8);
-                transform: translateY(3px);
-                box-shadow: 0 8px 0 #F59E0B, 0 14px 24px rgba(180, 83, 9, 0.18);
+                border-color: #d97706;
+                transform: translateY(1px);
+                box-shadow: 0 4px 8px rgba(146, 64, 14, 0.1);
             }
             .quiz-prompt {
                 text-align: center;
-                margin: 1.15rem 0 0.35rem 0 !important;
+                margin: 0.35rem 0 0.2rem 0 !important;
                 line-height: 1.15;
-                font-size: clamp(1.1rem, 4vw, 1.55rem) !important;
+                font-size: var(--font-md) !important;
+                color: #333333;
             }
             .answer-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 8px;
-                padding: 0;
+                gap: var(--space-3);
+                padding: 0 var(--space-4);
             }
             .answer-card {
-                border-radius: 16px;
-                padding: 4px;
-                box-shadow: 0 6px 16px rgba(0,0,0,0.16);
+                border-radius: var(--radius-md);
+                padding: 3px;
+                box-shadow: 0 6px 10px rgba(0,0,0,0.08);
                 min-height: 0;
             }
             .answer-card img {
                 width: 100%;
-                height: clamp(82px, 21vh, 160px);
+                height: clamp(96px, 17dvh, 156px);
                 object-fit: contain;
-                border-radius: 12px;
+                border-radius: var(--radius-sm);
                 display: block;
             }
             .audio-feedback {
@@ -988,9 +1078,21 @@ def main():
             }
             /* General buttons */
             .stButton button {
-                height: 42px;
-                font-size: 0.98rem;
-                border-radius: 14px;
+                height: 44px;
+                font-size: var(--font-sm);
+                border-radius: var(--radius-md);
+                font-weight: 600;
+            }
+            div[data-testid="stSelectbox"] > div,
+            div[data-testid="stSelectbox"] label,
+            div[data-testid="stSelectbox"] [data-baseweb="select"] {
+                font-size: clamp(0.9rem, 3.3vw, 1rem);
+            }
+            div[data-testid="stSelectbox"] [data-baseweb="select"] {
+                min-height: 44px;
+            }
+            div[data-testid="stToggle"] label p {
+                font-size: var(--font-sm) !important;
                 font-weight: 600;
             }
             div[data-testid="stButton"] button[kind="secondary"] {
@@ -1002,19 +1104,21 @@ def main():
             div[data-testid="stButton"] button[aria-label="🏠"],
             div[data-testid="stButton"] button[aria-label="🔊"],
             div[data-testid="stButton"] button[aria-label="🔇"] {
-                height: 74px;
-                font-size: 2.6rem;
+                height: 60px;
+                width: 60px;
+                min-width: 60px;
+                font-size: 2rem;
                 border-radius: 999px;
                 background: transparent;
-                color: #38A7FF;
+                color: #4A90D9;
             }
             div[data-testid="stButton"] button[aria-label^="🎧"] {
-                background: #6D9DF0;
-                color: #FFE6A8;
+                background: linear-gradient(90deg, #5B9BD5 0%, #4A7FC1 100%);
+                color: #FFF1C2;
                 border: none;
-                height: 62px;
-                font-size: 2.15rem;
-                border-radius: 10px;
+                height: 64px;
+                font-size: 1.2rem;
+                border-radius: 12px;
                 box-shadow: none;
                 margin: 0 0 0.45rem 0;
             }
@@ -1027,18 +1131,18 @@ def main():
             }
             /* Primary Next button */
             .stButton button[kind="primary"] {
-                background: linear-gradient(180deg, #FF0050 0%, #D8003B 100%);
-                color: #CFE2FF;
-                font-size: 5rem;
+                background: #EF4444;
+                color: #FFFFFF;
+                font-size: 2rem;
                 font-weight: 800;
-                line-height: 0.75;
-                height: 96px;
-                width: 96px;
-                min-width: 96px;
+                line-height: 1;
+                height: 56px;
+                width: 56px;
+                min-width: 56px;
                 border-radius: 999px;
-                padding: 0 0 0.65rem 0;
+                padding: 0;
                 border: none;
-                box-shadow: inset 0 -18px 0 rgba(120,0,30,0.18);
+                box-shadow: none;
             }
             /* Images */
             div[data-testid="stImage"] img {
@@ -1047,94 +1151,146 @@ def main():
             }
             @media (max-width: 768px) {
                 .block-container {
-                    padding-left: 0.2rem;
-                    padding-right: 0.2rem;
-                    padding-top: 1.85rem;
-                    padding-bottom: 0.25rem;
+                    padding-top: env(safe-area-inset-top);
+                    padding-bottom: env(safe-area-inset-bottom);
                 }
                 div[data-testid="stVerticalBlock"] {
-                    gap: 0.25rem;
-                }
-                .stButton button {
-                    height: 36px;
-                    font-size: 0.92rem;
-                    padding: 0.2rem 0.55rem;
+                    gap: 0.4rem;
                 }
                 .stButton button[kind="primary"] {
-                    height: 92px;
-                    width: 92px;
-                    min-width: 92px;
-                    font-size: 4.8rem;
+                    height: 56px;
+                    width: 56px;
+                    min-width: 56px;
+                    font-size: 2rem;
                 }
                 div[data-testid="stButton"] button[aria-label="🏠"],
                 div[data-testid="stButton"] button[aria-label="🔊"],
                 div[data-testid="stButton"] button[aria-label="🔇"] {
-                    height: 76px;
-                    font-size: 2.75rem;
+                    height: 60px;
+                    width: 60px;
+                    min-width: 60px;
+                    font-size: 2rem;
                 }
                 div[data-testid="stButton"] button[aria-label^="🎧"] {
-                    height: 58px;
-                    font-size: 2rem;
+                    height: 64px;
+                    font-size: 1.2rem;
                     margin-bottom: 0.35rem;
                 }
                 .quiz-score {
-                    font-size: 1.95rem;
-                    margin: 0.2rem 0 0.85rem 0;
-                    padding-left: 0.6rem;
+                    font-size: 1rem;
                 }
-                .quiz-topbar {
-                    min-height: 26px;
+                .home-title {
+                    font-size: 1.5rem !important;
+                }
+                .guide-title, .result-title {
+                    font-size: 1.35rem !important;
+                }
+                .home-subtitle {
+                    font-size: 0.84rem;
+                    margin-bottom: 0.3rem;
+                }
+                .guide-item,
+                .result-stats,
+                .result-feedback {
                     font-size: 0.9rem;
-                    padding: 0.2rem 0.45rem;
-                    margin-bottom: 0.1rem;
+                }
+                .home-action-buttons + div[data-testid="stHorizontalBlock"] button {
+                    min-height: 58px;
+                    font-size: 0.95rem;
                 }
                 .quiz-prompt {
-                    font-size: 1.35rem !important;
-                    margin: 0.95rem 0 0.25rem 0 !important;
+                    font-size: 1rem !important;
+                    margin: 0.25rem 0 0.2rem 0 !important;
                 }
                 .answer-grid {
-                    gap: 6px;
+                    gap: 12px;
                 }
                 .answer-card {
                     border-radius: 12px;
                     padding: 3px;
                 }
                 .answer-card img {
-                    height: clamp(76px, 20vh, 136px);
-                    border-radius: 9px;
-                }
-                iframe {
-                    max-height: 48vh;
+                    height: clamp(96px, 17dvh, 146px);
+                    border-radius: 8px;
                 }
             }
             @media (max-height: 700px) {
-                .stButton button {
-                    height: 34px;
-                    font-size: 0.88rem;
+                .home-subtitle {
+                    display: none;
+                }
+                .guide-title, .result-title {
+                    font-size: 1.15rem !important;
+                    margin-bottom: 0.2rem !important;
+                }
+                .guide-content {
+                    gap: 0.1rem;
+                }
+                .guide-item,
+                .result-stats,
+                .result-feedback {
+                    font-size: 0.84rem;
+                    line-height: 1.25;
+                }
+                .home-action-buttons + div[data-testid="stHorizontalBlock"] button {
+                    min-height: 52px;
                 }
                 .stButton button[kind="primary"] {
-                    height: 84px;
-                    width: 84px;
-                    min-width: 84px;
+                    height: 52px;
+                    width: 52px;
+                    min-width: 52px;
                 }
                 .quiz-prompt {
-                    font-size: 1.15rem !important;
+                    font-size: 0.95rem !important;
                 }
                 .answer-card img {
-                    height: clamp(66px, 18vh, 118px);
+                    height: clamp(84px, 15dvh, 128px);
                 }
                 .quiz-score {
-                    font-size: 1.55rem;
-                    margin-bottom: 0.55rem;
+                    font-size: 0.95rem;
                 }
                 div[data-testid="stButton"] button[aria-label^="🎧"] {
-                    height: 50px;
-                    font-size: 1.6rem;
+                    height: 54px;
+                    font-size: 1rem;
                 }
                 .audio-feedback {
                     font-size: 1.35rem;
                     height: 2.4rem;
                     margin: 0.18rem 0 0.28rem 0;
+                }
+            }
+            /* Samsung Galaxy A73 5G ~ 412x915 CSS viewport */
+            @media (min-width: 400px) and (max-width: 430px) and (min-height: 880px) and (max-height: 940px) {
+                .main .block-container {
+                    padding-top: max(env(safe-area-inset-top), 8px) !important;
+                    padding-bottom: max(env(safe-area-inset-bottom), 8px) !important;
+                }
+                .home-title, .guide-title, .result-title {
+                    font-size: 1.45rem !important;
+                }
+                .quiz-score {
+                    font-size: 1.02rem;
+                }
+                .quiz-prompt {
+                    font-size: 1.05rem !important;
+                    margin: 0.3rem 0 0.22rem 0 !important;
+                }
+                .answer-card img {
+                    height: clamp(104px, 16.5dvh, 152px);
+                }
+                div[data-testid="stButton"] button[aria-label^="🎧"] {
+                    height: 62px;
+                    font-size: 1.15rem;
+                }
+                .stButton button[kind="primary"] {
+                    height: 58px;
+                    width: 58px;
+                    min-width: 58px;
+                }
+                .result-stats {
+                    gap: 5px;
+                }
+                .guide-item, .result-feedback {
+                    font-size: 0.9rem;
                 }
             }
         </style>
