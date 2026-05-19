@@ -185,83 +185,8 @@ def azure_tts_data_uri(text: str, lang: str):
     return f"data:audio/mpeg;base64,{encoded}"
 
 
-def render_speech_button(
-    text: str,
-    lang: str,
-    label: str,
-    enabled: bool,
-    state_button_label=None,
-) -> None:
-    if not enabled:
-        return
-    label_json = json.dumps(label, ensure_ascii=False)
-    state_button_label_json = json.dumps(state_button_label, ensure_ascii=False)
-    audio_src = azure_tts_data_uri(text, lang)
-    audio_src_json = json.dumps(audio_src) if audio_src else "null"
-    html_str = f"""
-    <button id="speak-btn" type="button"></button>
-    <script>
-      const btn = document.getElementById("speak-btn");
-      const audioSrc = {audio_src_json};
-      const stateButtonLabel = {state_button_label_json};
-      const triggerStateButton = function() {{
-        if (!stateButtonLabel) return;
-        let parentDoc = document;
-        try {{
-          parentDoc = window.parent.document;
-        }} catch (e) {{}}
-        const buttons = Array.from(parentDoc.querySelectorAll("button"));
-        const stateButton = buttons.find(b => b.getAttribute("aria-label") === stateButtonLabel || b.textContent.trim() === stateButtonLabel);
-        if (stateButton) stateButton.click();
-      }};
-      btn.textContent = {label_json};
-      btn.style.width = "100%";
-      btn.style.height = "64px";
-      btn.style.border = "0";
-      btn.style.borderRadius = "12px";
-      btn.style.background = "linear-gradient(90deg, #5B9BD5 0%, #4A7FC1 100%)";
-      btn.style.color = "#FFF1C2";
-      btn.style.fontSize = "clamp(1.1rem, 4.2vw, 1.3rem)";
-      btn.style.fontWeight = "700";
-      btn.style.display = "flex";
-      btn.style.alignItems = "center";
-      btn.style.justifyContent = "center";
-      btn.style.gap = "8px";
-      btn.style.cursor = "pointer";
-      btn.onclick = function() {{
-        let parentDoc = document;
-        try {{
-          parentDoc = window.parent.document;
-        }} catch (e) {{}}
-        if (audioSrc) {{
-          const oldAudio = parentDoc.getElementById("tts-replay-audio");
-          if (oldAudio) oldAudio.remove();
-          const audio = parentDoc.createElement("audio");
-          audio.id = "tts-replay-audio";
-          audio.src = audioSrc;
-          audio.playsInline = true;
-          audio.volume = 1;
-          parentDoc.body.appendChild(audio);
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {{
-            playPromise.catch(function() {{ triggerStateButton(); }});
-          }}
-          audio.onended = function() {{
-            audio.remove();
-            triggerStateButton();
-          }};
-        }} else {{
-          triggerStateButton();
-        }}
-      }};
-    </script>
-    """
-    components.html(html_str, height=66, scrolling=False)
-
-
-
-
-
+def render_speech_button(*_args, **_kwargs) -> None:
+    return
 
 
 LANG = {
@@ -707,16 +632,10 @@ def render_quiz():
         unsafe_allow_html=True,
     )
 
-    replay_state_label = "\u2063" if st.session_state.answer_locked and st.session_state.last_type == "warning" else None
-    render_speech_button(
-        q["prompt"],
-        lang,
-        f"{ICONS['audio_btn']} Nghe lại" if lang == "vi" else f"{ICONS['audio_btn']} Replay",
-        True,
-        replay_state_label,
-    )
-    if replay_state_label:
-        if st.button(replay_state_label, key=f"replay_{st.session_state.index}", use_container_width=True):
+    replay_label = f"{ICONS['audio_btn']} Nghe lại" if lang == "vi" else f"{ICONS['audio_btn']} Replay"
+    if st.button(replay_label, key=f"replay_main_{st.session_state.index}_{st.session_state.replay_count}", use_container_width=True):
+        speak(q["prompt"], lang, True)
+        if st.session_state.answer_locked and st.session_state.last_type == "warning":
             st.session_state.answer_locked = False
             st.session_state.selected_option_index = -1
             st.session_state.last_message = ""
@@ -734,32 +653,7 @@ def render_quiz():
 
     # ── Image choice grid ──────────────────────────────────────────────────
     if st.session_state.answer_locked:
-        # POST-ANSWER: show 2×2 grid with green/red border feedback via HTML
-        grid_html = """
-        <style>
-            body { margin: 0; background: transparent; }
-            .answer-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-                padding: 0;
-            }
-            .answer-card {
-                border-radius: 16px;
-                padding: 4px;
-                box-shadow: 0 6px 16px rgba(0,0,0,0.16);
-                min-height: 0;
-            }
-            .answer-card img {
-                width: 100%;
-                height: clamp(76px, 20vh, 150px);
-                object-fit: contain;
-                border-radius: 12px;
-                display: block;
-            }
-        </style>
-        <div class="answer-grid">
-        """
+        grid_html = "<div class='answer-grid'>"
         for i in range(len(q["options"])):
             opt_label = q["options"][i]
             img_path = q["option_images"][i]
@@ -776,12 +670,12 @@ def render_quiz():
             
             b64_uri = to_data_uri(img_path)
             grid_html += f'''
-            <div class="answer-card" style="border:{border}; background:{bg};">
+            <div class="answer-card locked-answer-card" style="border:{border}; background:{bg};">
                 <img src="{b64_uri}">
             </div>
             '''
         grid_html += "</div>"
-        components.html(grid_html, height=340, scrolling=False)
+        st.markdown(grid_html, unsafe_allow_html=True)
     else:
         # PRE-ANSWER: images are directly clickable via streamlit-clickable-images
         if clickable_images is not None:
