@@ -67,19 +67,20 @@ def render_fireworks():
         var audio = parentDoc.createElement("audio");
         audio.src = "data:audio/mp3;base64,{b64}";
         audio.volume = 0.8;
+        audio.loop = true;
         parentDoc.body.appendChild(audio);
         var playPromise = audio.play();
         if (playPromise !== undefined) {{
             playPromise.catch(function(e) {{ console.log(e); }});
         }}
-        setTimeout(function() {{ audio.remove(); }}, 10000);
+        setTimeout(function() {{ audio.pause(); audio.remove(); }}, 10000);
         """
         
     html_str = f"""
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
       {audio_js}
-      var duration = 3 * 1000;
+      var duration = 10 * 1000;
       var end = Date.now() + duration;
       (function frame() {{
         confetti({{ particleCount: 5, angle: 60, spread: 55, origin: {{ x: 0 }}, colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'] }});
@@ -444,7 +445,7 @@ def render_parent_guide():
 def render_home():
     lang = st.session_state.lang
     t = LANG[lang]
-    st.title(f"🌈 {t['app_name']}")
+    st.markdown(f"<h2 class='home-title'>🌈 {t['app_name']}</h2>", unsafe_allow_html=True)
     st.caption(t["subtitle"])
 
     col1, col2 = st.columns(2)
@@ -455,19 +456,16 @@ def render_home():
 
     lang = st.session_state.lang
     t = LANG[lang]
-    st.subheader(f"1) {t['topic']}")
     topic_keys = list(TOPIC_META.keys())
     labels = [topic_label(k, lang) for k in topic_keys]
-    selected = st.radio(
+    selected = st.selectbox(
         label=t["topic"],
         options=topic_keys,
         format_func=lambda x: labels[topic_keys.index(x)],
-        horizontal=False,
     )
     st.session_state.topic = selected
 
-    st.subheader("2) " + t["sound_on"] + "/" + t["sound_off"])
-    st.session_state.sound = st.toggle("🔊", value=st.session_state.sound, label_visibility="collapsed")
+    st.session_state.sound = st.toggle("🔊 " + t["sound_on"], value=st.session_state.sound)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -486,26 +484,26 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     current = st.session_state.index + 1
 
-    # Top header: Progress + Score + Replay Button
-    c1, c2, c3 = st.columns([1.5, 1, 1])
-    with c1:
-        st.markdown(f"**🏅 {t['score']}: {st.session_state.score}**")
-    with c2:
-        st.markdown(f"**🎯 {current}/10**")
-    with c3:
-        if st.button("🔁 " + t["replay_audio"], use_container_width=True):
-            speak(q["prompt"], lang, st.session_state.sound)
-            # Force fresh choices and allow user to try again
-            st.session_state.answer_locked = False
-            st.session_state.selected_option_index = -1
-            st.session_state.last_message = ""
-            st.session_state.last_type = ""
-            st.session_state.replay_count += 1
-            st.session_state.feedback_spoken_index = -1
-            st.rerun()
+    st.markdown(
+        f"""
+        <div class="quiz-topbar">
+            <span>{t['score']}: {st.session_state.score}</span>
+            <span>{current}/10</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("🔁 " + t["replay_audio"], use_container_width=True):
+        speak(q["prompt"], lang, st.session_state.sound)
+        st.session_state.answer_locked = False
+        st.session_state.selected_option_index = -1
+        st.session_state.last_message = ""
+        st.session_state.last_type = ""
+        st.session_state.replay_count += 1
+        st.session_state.feedback_spoken_index = -1
+        st.rerun()
 
-    st.progress(current / 10)
-    st.markdown(f"<h3 style='text-align: center; margin-top: -10px;'>{q['prompt']}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 class='quiz-prompt'>{q['prompt']}</h3>", unsafe_allow_html=True)
 
     if st.session_state.last_spoken_index != st.session_state.index:
         speak(q["prompt"], lang, st.session_state.sound)
@@ -514,7 +512,31 @@ def render_quiz():
     # ── Image choice grid ──────────────────────────────────────────────────
     if st.session_state.answer_locked:
         # POST-ANSWER: show 2×2 grid with green/red border feedback via HTML
-        grid_html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 4px;">'
+        grid_html = """
+        <style>
+            body { margin: 0; background: transparent; }
+            .answer-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                padding: 0;
+            }
+            .answer-card {
+                border-radius: 16px;
+                padding: 4px;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.16);
+                min-height: 0;
+            }
+            .answer-card img {
+                width: 100%;
+                height: clamp(76px, 20vh, 150px);
+                object-fit: contain;
+                border-radius: 12px;
+                display: block;
+            }
+        </style>
+        <div class="answer-grid">
+        """
         for i in range(len(q["options"])):
             opt_label = q["options"][i]
             img_path = q["option_images"][i]
@@ -531,12 +553,12 @@ def render_quiz():
             
             b64_uri = to_data_uri(img_path)
             grid_html += f'''
-            <div style="border:{border}; border-radius:18px; background:{bg}; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.10);">
-                <img src="{b64_uri}" style="width:100%; border-radius:14px; display:block;">
+            <div class="answer-card" style="border:{border}; background:{bg};">
+                <img src="{b64_uri}">
             </div>
             '''
-        grid_html += '</div>'
-        st.markdown(grid_html, unsafe_allow_html=True)
+        grid_html += "</div>"
+        components.html(grid_html, height=340, scrolling=False)
     else:
         # PRE-ANSWER: images are directly clickable via streamlit-clickable-images
         if clickable_images is not None:
@@ -547,15 +569,18 @@ def render_quiz():
                 div_style={
                     "display": "grid",
                     "grid-template-columns": "1fr 1fr",
-                    "gap": "14px",
-                    "padding": "4px",
+                    "gap": "8px",
+                    "padding": "0",
                 },
                 img_style={
+                    "height": "clamp(82px, 21vh, 160px)",
                     "width": "100%",
                     "border-radius": "16px",
                     "cursor": "pointer",
                     "border": "4px solid #D1D5DB",
                     "box-shadow": "0 4px 14px rgba(0,0,0,0.10)",
+                    "object-fit": "contain",
+                    "background": "#FFFFFF",
                     "transition": "transform 0.12s ease, box-shadow 0.12s ease",
                 },
                 key=f"img_click_{st.session_state.index}_{st.session_state.replay_count}",
@@ -605,10 +630,8 @@ def render_quiz():
         if st.session_state.feedback_spoken_index != st.session_state.index:
             speak(st.session_state.last_message, lang, st.session_state.sound)
             st.session_state.feedback_spoken_index = st.session_state.index
-        if st.session_state.last_type == "success":
-            st.success("🎉 " + st.session_state.last_message)
-        else:
-            st.warning("💪 " + st.session_state.last_message)
+        feedback_icon = "🎉" if st.session_state.last_type == "success" else "💪"
+        st.markdown(f"<div class='audio-feedback'>{feedback_icon}</div>", unsafe_allow_html=True)
 
     if st.session_state.answer_locked:
         if st.button("➡️ " + t["next_question"], use_container_width=True, type="primary"):
@@ -621,14 +644,6 @@ def render_quiz():
             st.session_state.replay_count = 0  # reset for next question
             if st.session_state.index >= len(st.session_state.round):
                 st.session_state.screen = "result"
-            st.rerun()
-
-    c1, c2 = st.columns(2)
-    with c1:
-        st.session_state.sound = st.toggle("🔊", value=st.session_state.sound, key="quiz_sound")
-    with c2:
-        if st.button("🏠 " + t["home"], use_container_width=True):
-            st.session_state.screen = "home"
             st.rerun()
 
 
@@ -673,13 +688,68 @@ def main():
         <style>
             /* Reduce Streamlit container padding for mobile */
             .block-container {
-                padding-top: 1.5rem;
-                padding-bottom: 1.5rem;
+                padding-top: 0.6rem;
+                padding-bottom: 0.5rem;
+            }
+            div[data-testid="stVerticalBlock"] {
+                gap: 0.35rem;
+            }
+            .quiz-topbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-weight: 800;
+                font-size: clamp(0.95rem, 2.8vw, 1.2rem);
+                min-height: 34px;
+                line-height: 1;
+                padding: 0.15rem 0 0.25rem 0;
+                margin: 0;
+            }
+            .home-title {
+                text-align: center;
+                margin: 0.1rem 0 0.2rem 0 !important;
+                line-height: 1.1;
+            }
+            .quiz-prompt {
+                text-align: center;
+                margin: 0.1rem 0 0.3rem 0 !important;
+                line-height: 1.15;
+                font-size: clamp(1.1rem, 4vw, 1.55rem) !important;
+            }
+            .answer-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                padding: 0;
+            }
+            .answer-card {
+                border-radius: 16px;
+                padding: 4px;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.16);
+                min-height: 0;
+            }
+            .answer-card img {
+                width: 100%;
+                height: clamp(82px, 21vh, 160px);
+                object-fit: contain;
+                border-radius: 12px;
+                display: block;
+            }
+            .audio-feedback {
+                text-align: center;
+                font-size: clamp(1.6rem, 5vw, 2.4rem);
+                line-height: 1;
+                height: 2.4rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0.15rem 0 0.25rem 0;
+                overflow: visible;
             }
             /* General buttons */
             .stButton button {
-                height: 52px;
-                font-size: 1.05rem;
+                height: 42px;
+                font-size: 0.98rem;
                 border-radius: 14px;
                 font-weight: 600;
             }
@@ -702,8 +772,8 @@ def main():
             .stButton button[kind="primary"] {
                 background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
                 color: white;
-                font-size: 1.15rem;
-                height: 58px;
+                font-size: 1.05rem;
+                height: 46px;
             }
             /* Images */
             div[data-testid="stImage"] img {
@@ -711,8 +781,67 @@ def main():
                 display: block;
             }
             @media (max-width: 768px) {
-                .stButton button { height: 56px; font-size: 1.05rem; }
-                h3 { font-size: 1.3rem !important; }
+                .block-container {
+                    padding-left: 0.7rem;
+                    padding-right: 0.7rem;
+                    padding-top: 0.35rem;
+                    padding-bottom: 0.25rem;
+                }
+                div[data-testid="stVerticalBlock"] {
+                    gap: 0.25rem;
+                }
+                .stButton button {
+                    height: 38px;
+                    font-size: 0.92rem;
+                    padding: 0.2rem 0.55rem;
+                }
+                .stButton button[kind="primary"] {
+                    height: 42px;
+                    font-size: 0.98rem;
+                }
+                .quiz-topbar {
+                    min-height: 28px;
+                    font-size: 0.9rem;
+                    padding: 0.05rem 0 0.15rem 0;
+                }
+                .quiz-prompt {
+                    font-size: 1.12rem !important;
+                    margin: 0 !important;
+                }
+                .answer-grid {
+                    gap: 6px;
+                }
+                .answer-card {
+                    border-radius: 12px;
+                    padding: 3px;
+                }
+                .answer-card img {
+                    height: clamp(76px, 20vh, 136px);
+                    border-radius: 9px;
+                }
+                iframe {
+                    max-height: 48vh;
+                }
+            }
+            @media (max-height: 700px) {
+                .stButton button {
+                    height: 34px;
+                    font-size: 0.88rem;
+                }
+                .stButton button[kind="primary"] {
+                    height: 38px;
+                }
+                .quiz-prompt {
+                    font-size: 1rem !important;
+                }
+                .answer-card img {
+                    height: clamp(66px, 18vh, 118px);
+                }
+                .audio-feedback {
+                    font-size: 1.35rem;
+                    height: 1.8rem;
+                    margin: 0.05rem 0 0.15rem 0;
+                }
             }
         </style>
         """,

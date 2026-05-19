@@ -32,6 +32,9 @@ sys.modules.setdefault("streamlit_image_select", fake_image_select_mod)
 fake_clickable_mod = types.ModuleType("st_clickable_images")
 fake_clickable_mod.clickable_images = lambda *args, **kwargs: -1
 sys.modules.setdefault("st_clickable_images", fake_clickable_mod)
+fake_streamlit_clickable_mod = types.ModuleType("streamlit_clickable_images")
+fake_streamlit_clickable_mod.clickable_images = lambda *args, **kwargs: -1
+sys.modules.setdefault("streamlit_clickable_images", fake_streamlit_clickable_mod)
 
 import app  # noqa: E402
 
