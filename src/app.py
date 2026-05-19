@@ -1012,6 +1012,12 @@ def main():
                 background: transparent;
                 color: #4A90D9;
             }
+            div[data-testid="stButton"] button[aria-label="🔊"],
+            div[data-testid="stButton"] button[aria-label="🔇"] {
+                background: #FFFFFF !important;
+                border: 2.5px solid #4A90D9 !important;
+                box-shadow: 0 2px 8px rgba(74, 144, 217, 0.18) !important;
+            }
             .quiz-header-row {
                 height: 76px;
                 width: 100%;
