@@ -12,7 +12,7 @@ except ModuleNotFoundError:
 
 
 ASSET_DIR = Path(__file__).resolve().parent.parent / "assets" / "images"
-
+AUDIO_DIR = Path(__file__).resolve().parent.parent / "assets" / "audio"
 
 def img(path: str) -> str:
     return str(ASSET_DIR / path)
@@ -25,6 +25,37 @@ def to_data_uri(path: str) -> str:
     data = Path(path).read_bytes()
     encoded = base64.b64encode(data).decode("utf-8")
     return f"data:{mime};base64,{encoded}"
+
+
+def render_bgm():
+    bgm_path = AUDIO_DIR / "bgm.mp3"
+    if not bgm_path.exists():
+        return
+    b64 = base64.b64encode(bgm_path.read_bytes()).decode()
+    html_str = f"""
+    <audio autoplay loop>
+        <source src="data:audio/mp3;base64,{b64}" type="audio/mpeg">
+    </audio>
+    """
+    st.components.v1.html(html_str, width=0, height=0)
+
+
+def render_fireworks():
+    html_str = """
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+      var duration = 3 * 1000;
+      var end = Date.now() + duration;
+      (function frame() {
+        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'] });
+        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00'] });
+        if (Date.now() < end) { requestAnimationFrame(frame); }
+      }());
+    </script>
+    """
+    st.components.v1.html(html_str, width=0, height=0)
+
+
 
 
 
@@ -331,6 +362,7 @@ def init_state():
     st.session_state.setdefault("answer_locked", False)
     st.session_state.setdefault("selected_option_index", -1)
     st.session_state.setdefault("replay_count", 0)
+    st.session_state.setdefault("celebrated", False)
 
 
 def start_round():
@@ -344,6 +376,7 @@ def start_round():
     st.session_state.answer_locked = False
     st.session_state.selected_option_index = -1
     st.session_state.replay_count = 0
+    st.session_state.celebrated = False
     st.session_state.screen = "quiz"
 
 
@@ -432,6 +465,7 @@ def render_quiz():
         st.session_state.last_message = ""
         st.session_state.last_type = ""
         st.session_state.replay_count += 1
+        st.session_state.feedback_spoken_index = -1
         st.rerun()
 
     if st.session_state.last_spoken_index != st.session_state.index:
@@ -573,6 +607,11 @@ def render_result():
     st.write(f"**{t['score']}: {score}/10**")
     st.info(grade_feedback(score, lang))
 
+    if not st.session_state.get("celebrated", False):
+        st.balloons()
+        render_fireworks()
+        st.session_state.celebrated = True
+
     c1, c2, c3 = st.columns(3)
     with c1:
         if st.button("🔁 " + t["play_again"], use_container_width=True):
@@ -590,6 +629,7 @@ def render_result():
 
 def main():
     st.set_page_config(page_title="Học Cùng Con", page_icon="🌈", layout="centered")
+    render_bgm()
     st.markdown(
         """
         <style>
