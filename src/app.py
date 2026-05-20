@@ -1165,7 +1165,7 @@ def main():
             div[data-testid="stElementContainer"]:has(.quiz-footer-action) + div[data-testid="stButton"] {
                 position: fixed !important;
                 right: max(env(safe-area-inset-right), 20px) !important;
-                bottom: calc(max(env(safe-area-inset-bottom), 0px) + 46px) !important;
+                bottom: calc(max(env(safe-area-inset-bottom), 0px) + 86px) !important;
                 width: min(176px, calc(100vw - 40px)) !important;
                 z-index: 10000 !important;
             }
