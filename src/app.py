@@ -615,7 +615,7 @@ def render_quiz():
     completed = st.session_state.index
 
     st.markdown("<div class='quiz-top-actions'></div>", unsafe_allow_html=True)
-    if st.button(t["home"], key="quiz_home_button"):
+    if st.button(ICONS["home"], key="quiz_home_button"):
         stop_applause()
         st.session_state.screen = "home"
         st.rerun()
@@ -754,25 +754,25 @@ def render_quiz():
             st.session_state.feedback_spoken_index = st.session_state.index
 
     if st.session_state.answer_locked:
-        _, col_next = st.columns([5, 1])
-        with col_next:
-            if st.button(ICONS["next"], key=f"next_{st.session_state.index}", type="primary", use_container_width=True):
-                st.session_state.score += st.session_state.pending_score_increment
-                st.session_state.pending_score_increment = 0
-                st.session_state.last_message = ""
-                st.session_state.last_audio_message = ""
-                st.session_state.last_type = ""
-                st.session_state.feedback_spoken_index = -1
-                st.session_state.index += 1
-                st.session_state.answer_locked = False
-                st.session_state.selected_option_index = -1
-                st.session_state.question_had_wrong_attempt = False
-                st.session_state.question_scored = False
-                st.session_state.pending_score_increment = 0
-                st.session_state.replay_count = 0
-                if st.session_state.index >= len(st.session_state.round):
-                    st.session_state.screen = "result"
-                st.rerun()
+        next_label = "TIẾP THEO ➤" if lang == "vi" else "NEXT ➤"
+        st.markdown("<div class='quiz-footer-action'></div>", unsafe_allow_html=True)
+        if st.button(next_label, key=f"next_{st.session_state.index}", type="primary", use_container_width=True):
+            st.session_state.score += st.session_state.pending_score_increment
+            st.session_state.pending_score_increment = 0
+            st.session_state.last_message = ""
+            st.session_state.last_audio_message = ""
+            st.session_state.last_type = ""
+            st.session_state.feedback_spoken_index = -1
+            st.session_state.index += 1
+            st.session_state.answer_locked = False
+            st.session_state.selected_option_index = -1
+            st.session_state.question_had_wrong_attempt = False
+            st.session_state.question_scored = False
+            st.session_state.pending_score_increment = 0
+            st.session_state.replay_count = 0
+            if st.session_state.index >= len(st.session_state.round):
+                st.session_state.screen = "result"
+            st.rerun()
 
 
 def render_result():
@@ -1091,6 +1091,109 @@ def main():
             iframe {
                 max-width: 100% !important;
                 width: 100% !important;
+            }
+            .stApp::before,
+            .stApp::after {
+                position: fixed;
+                left: 0;
+                width: 100%;
+                height: 38px;
+                z-index: 9998;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #E5E7EB;
+                color: #6B7280;
+                content: "Quảng cáo";
+                font-size: 12px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                pointer-events: none;
+            }
+            .stApp::before {
+                top: 0;
+            }
+            .stApp::after {
+                bottom: 0;
+            }
+            .stApp,
+            [data-testid="stAppViewContainer"] {
+                background: linear-gradient(180deg, #FFFFFF 0%, #F7F8FA 42%, #D1D5DB 100%) !important;
+            }
+            .main .block-container {
+                padding-top: calc(max(env(safe-area-inset-top), 0px) + 58px) !important;
+                padding-bottom: calc(max(env(safe-area-inset-bottom), 0px) + 58px) !important;
+            }
+            button[aria-label="🏠"],
+            div[data-testid="stButton"] button[aria-label="🏠"] {
+                width: 48px !important;
+                height: 48px !important;
+                min-height: 48px !important;
+                border-radius: 12px !important;
+                background: transparent !important;
+                color: #111827 !important;
+                border: none !important;
+                box-shadow: none !important;
+                font-size: 2rem !important;
+                line-height: 1 !important;
+                padding: 0 !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stButton"] {
+                position: fixed !important;
+                top: calc(max(env(safe-area-inset-top), 0px) + 52px) !important;
+                left: max(env(safe-area-inset-left), 20px) !important;
+                right: auto !important;
+                width: 48px !important;
+                height: 48px !important;
+                z-index: 10000 !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stButton"] + div[data-testid="stButton"] {
+                position: fixed !important;
+                top: calc(max(env(safe-area-inset-top), 0px) + 52px) !important;
+                right: max(env(safe-area-inset-right), 20px) !important;
+                width: 48px !important;
+                height: 48px !important;
+                z-index: 10000 !important;
+            }
+            button[aria-label="🔊"],
+            button[aria-label="🔇"],
+            div[data-testid="stButton"] button[aria-label="🔊"],
+            div[data-testid="stButton"] button[aria-label="🔇"] {
+                width: 48px !important;
+                height: 48px !important;
+                min-height: 48px !important;
+                border-radius: 12px !important;
+                color: #111827 !important;
+                font-size: 2rem !important;
+                line-height: 1 !important;
+            }
+            .quiz-top-actions {
+                height: 56px !important;
+            }
+            .quiz-footer-action {
+                height: 64px;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-footer-action) + div[data-testid="stButton"] {
+                position: fixed !important;
+                right: max(env(safe-area-inset-right), 20px) !important;
+                bottom: calc(max(env(safe-area-inset-bottom), 0px) + 58px) !important;
+                width: min(176px, calc(100vw - 40px)) !important;
+                z-index: 10000 !important;
+            }
+            div[data-testid="stElementContainer"]:has(.quiz-footer-action) + div[data-testid="stButton"] button[kind="primary"],
+            div[data-testid="stElementContainer"]:has(.quiz-footer-action) + div[data-testid="stButton"] button[data-testid="baseButton-primary"] {
+                height: 52px !important;
+                min-height: 52px !important;
+                border-radius: 12px !important;
+                background: #2563EB !important;
+                color: #FFFFFF !important;
+                font-size: 0.95rem !important;
+                font-weight: 800 !important;
+                letter-spacing: 0 !important;
+                padding: 0 18px !important;
+                border: none !important;
+                box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3) !important;
+                white-space: nowrap !important;
             }
             @media (max-width: 768px) {
                 .block-container {
