@@ -611,7 +611,7 @@ def render_quiz():
             }
             .answer-card img {
                 width: 100%;
-                height: clamp(100px, 40dvh, 168px);
+                height: clamp(96px, 17dvh, 156px);
                 object-fit: contain;
                 border-radius: 8px;
                 display: block;
