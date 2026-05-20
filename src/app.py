@@ -25,6 +25,8 @@ def img(path: str) -> str:
 
 
 def to_data_uri(path: str) -> str:
+    if path.startswith("data:"):
+        return path
     mime, _ = mimetypes.guess_type(path)
     if mime is None:
         mime = "image/png"
@@ -34,77 +36,13 @@ def to_data_uri(path: str) -> str:
 
 
 def render_bgm(enabled: bool = True):
-    bgm_path = AUDIO_DIR / "bgm.mp3"
-    if not enabled:
-        st.components.v1.html(
-            """
-            <script>
-                var audio = window.parent.document.getElementById("my-bgm");
-                if (audio) { audio.pause(); }
-            </script>
-            """,
-            width=0,
-            height=0,
-        )
-        return
-    if not bgm_path.exists():
-        return
-    b64 = base64.b64encode(bgm_path.read_bytes()).decode()
-    html_str = f"""
-    <script>
-        var parentDoc = window.parent.document;
-        var audio = parentDoc.getElementById("my-bgm");
-        if (!audio) {{
-            audio = parentDoc.createElement("audio");
-            audio.id = "my-bgm";
-            audio.src = "data:audio/mp3;base64,{b64}";
-            audio.loop = true;
-            parentDoc.body.appendChild(audio);
-        }}
-        audio.volume = 0.18;
-        var playPromise = audio.play();
-        if (playPromise !== undefined) {{
-            playPromise.catch(function(error) {{
-                parentDoc.addEventListener("click", function() {{
-                    audio.play();
-                }}, {{once: true}});
-            }});
-        }}
-    </script>
-    """
-    st.components.v1.html(html_str, width=0, height=0)
+    return
 
 
 def render_fireworks():
-    applause_path = AUDIO_DIR / "applause.ogg"
-    applause_mime = "audio/ogg"
-    if not applause_path.exists():
-        applause_path = AUDIO_DIR / "applause.mp3"
-        applause_mime = "audio/mpeg"
-    audio_js = ""
-    if applause_path.exists():
-        b64 = base64.b64encode(applause_path.read_bytes()).decode()
-        audio_js = f"""
-        var parentDoc = window.parent.document;
-        var oldAudio = parentDoc.getElementById("completion-applause");
-        if (oldAudio) {{ oldAudio.pause(); oldAudio.remove(); }}
-        var audio = parentDoc.createElement("audio");
-        audio.id = "completion-applause";
-        audio.src = "data:{applause_mime};base64,{b64}";
-        audio.volume = 0.9;
-        audio.loop = true;
-        parentDoc.body.appendChild(audio);
-        var playPromise = audio.play();
-        if (playPromise !== undefined) {{
-            playPromise.catch(function(e) {{ console.log(e); }});
-        }}
-        setTimeout(function() {{ audio.pause(); audio.remove(); }}, 10000);
-        """
-        
     html_str = f"""
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
-      {audio_js}
       var duration = 10 * 1000;
       var end = Date.now() + duration;
       (function frame() {{
@@ -118,19 +56,7 @@ def render_fireworks():
 
 
 def stop_applause():
-    st.components.v1.html(
-        """
-        <script>
-            var audio = window.parent.document.getElementById("completion-applause");
-            if (audio) {
-                audio.pause();
-                audio.remove();
-            }
-        </script>
-        """,
-        width=0,
-        height=0,
-    )
+    return
 
 
 def get_config_value(name: str, default: str = "") -> str:
@@ -189,10 +115,44 @@ def render_speech_button(*_args, **_kwargs) -> None:
     return
 
 
+def number_svg_data_uri(num: int) -> str:
+    number_text = str(num)
+    svg = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="320" height="240">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#FFF7D6"/>
+          <stop offset="100%" stop-color="#DBEAFE"/>
+        </linearGradient>
+      </defs>
+      <rect x="6" y="6" width="308" height="228" rx="28" fill="url(#bg)" stroke="#3B82F6" stroke-width="6"/>
+      <text x="160" y="145" text-anchor="middle" font-size="84" font-weight="800" fill="#1D4ED8" font-family="Arial, sans-serif">{number_text}</text>
+    </svg>
+    """.strip()
+    encoded = base64.b64encode(svg.encode("utf-8")).decode("utf-8")
+    return f"data:image/svg+xml;base64,{encoded}"
+
+
+def build_number_items(max_number: int = 5000):
+    items = []
+    for i in range(1, max_number + 1):
+        group = f"range_{(i - 1) // 100}"
+        items.append(
+            {
+                "id": f"NUM_{i:04d}",
+                "group": group,
+                "vi": str(i),
+                "en": str(i),
+                "image": number_svg_data_uri(i),
+            }
+        )
+    return items
+
+
 LANG = {
     "vi": {
         "app_name": "Học Cùng Con",
-        "subtitle": "Bé học màu sắc, hình học, chữ cái, con vật và con số",
+        "subtitle": "Bé học màu sắc, hình học, con vật và con số",
         "start": "Bắt đầu",
         "home": "Trang chủ",
         "guide": "Hướng dẫn phụ huynh",
@@ -222,7 +182,7 @@ LANG = {
             "1) Chọn ngôn ngữ phù hợp với bé.",
             "2) Chọn 1 chủ đề và bấm Bắt đầu.",
             "3) Mỗi lượt có 10 câu, mỗi câu 4 đáp án bằng hình ảnh.",
-            "4) Có thể bật/tắt âm thanh và nghe lại câu hỏi.",
+            "4) Có thể nghe lại câu hỏi.",
             "5) Kết thúc sẽ hiển thị điểm và gợi ý cho bé học tiếp.",
         ],
         "feedback_bands": [
@@ -234,7 +194,7 @@ LANG = {
     },
     "en": {
         "app_name": "Learn With Kids",
-        "subtitle": "Learn colors, shapes, letters, animals and numbers",
+        "subtitle": "Learn colors, shapes, animals and numbers",
         "start": "Start",
         "home": "Home",
         "guide": "Parent guide",
@@ -264,7 +224,7 @@ LANG = {
             "1) Choose a language for your child.",
             "2) Pick a topic then press Start.",
             "3) Each round has 10 image-based questions with 4 options.",
-            "4) You can toggle sound and replay each question.",
+            "4) You can replay each question.",
             "5) Final screen shows score and encouragement.",
         ],
         "feedback_bands": [
@@ -370,39 +330,7 @@ DATA = {
     "numbers": {
         "prompt_vi": "Con hãy chọn số {item}.",
         "prompt_en": "Please choose number {item}.",
-        "items": [
-            {"id": "NUM_001", "group": "small", "vi": "0", "en": "0", "image": img("numbers/0.png")},
-            {"id": "NUM_002", "group": "small", "vi": "1", "en": "1", "image": img("numbers/1.png")},
-            {"id": "NUM_003", "group": "small", "vi": "2", "en": "2", "image": img("numbers/2.png")},
-            {"id": "NUM_004", "group": "small", "vi": "3", "en": "3", "image": img("numbers/3.png")},
-            {"id": "NUM_005", "group": "small", "vi": "4", "en": "4", "image": img("numbers/4.png")},
-            {"id": "NUM_006", "group": "small", "vi": "5", "en": "5", "image": img("numbers/5.png")},
-            {"id": "NUM_007", "group": "small", "vi": "6", "en": "6", "image": img("numbers/6.png")},
-            {"id": "NUM_008", "group": "small", "vi": "7", "en": "7", "image": img("numbers/7.png")},
-            {"id": "NUM_009", "group": "small", "vi": "8", "en": "8", "image": img("numbers/8.png")},
-            {"id": "NUM_010", "group": "small", "vi": "9", "en": "9", "image": img("numbers/9.png")},
-            {"id": "NUM_011", "group": "small", "vi": "10", "en": "10", "image": img("numbers/10.png")},
-            {"id": "NUM_012", "group": "small", "vi": "12", "en": "12", "image": img("numbers/12.png")},
-            {"id": "NUM_013", "group": "small", "vi": "15", "en": "15", "image": img("numbers/15.png")},
-            {"id": "NUM_014", "group": "tens", "vi": "20", "en": "20", "image": img("numbers/20.png")},
-            {"id": "NUM_015", "group": "tens", "vi": "30", "en": "30", "image": img("numbers/30.png")},
-            {"id": "NUM_016", "group": "tens", "vi": "50", "en": "50", "image": img("numbers/50.png")},
-            {"id": "NUM_017", "group": "tens", "vi": "100", "en": "100", "image": img("numbers/100.png")},
-            {"id": "NUM_018", "group": "hundreds", "vi": "200", "en": "200", "image": img("numbers/200.png")},
-            {"id": "NUM_019", "group": "hundreds", "vi": "500", "en": "500", "image": img("numbers/500.png")},
-            {"id": "NUM_020", "group": "thousands", "vi": "1000", "en": "1000", "image": img("numbers/1000.png")},
-            {"id": "NUM_021", "group": "thousands", "vi": "2000", "en": "2000", "image": img("numbers/2000.png")},
-            {"id": "NUM_022", "group": "thousands", "vi": "5000", "en": "5000", "image": img("numbers/5000.png")},
-            {"id": "NUM_023", "group": "thousands", "vi": "10000", "en": "10000", "image": img("numbers/10000.png")},
-            {"id": "NUM_024", "group": "large_round", "vi": "20000", "en": "20000", "image": img("numbers/20000.png")},
-            {"id": "NUM_025", "group": "large_round", "vi": "50000", "en": "50000", "image": img("numbers/50000.png")},
-            {"id": "NUM_026", "group": "large_round", "vi": "100000", "en": "100000", "image": img("numbers/100000.png")},
-            {"id": "NUM_027", "group": "large_round", "vi": "500000", "en": "500000", "image": img("numbers/500000.png")},
-            {"id": "NUM_028", "group": "large_round", "vi": "1000000", "en": "1000000", "image": img("numbers/1000000.png")},
-            {"id": "NUM_029", "group": "large_round", "vi": "10000000", "en": "10000000", "image": img("numbers/10000000.png")},
-            {"id": "NUM_030", "group": "large_round", "vi": "100000000", "en": "100000000", "image": img("numbers/100000000.png")},
-            {"id": "NUM_031", "group": "large_round", "vi": "1000000000", "en": "1000000000", "image": img("numbers/1000000000.png")},
-        ],
+        "items": build_number_items(5000),
     },
 }
 
@@ -579,18 +507,14 @@ def handle_query_actions():
     if action == "home":
         stop_applause()
         st.session_state.screen = "home"
-    elif action == "sound":
-        st.session_state.bgm_enabled = not st.session_state.bgm_enabled
     st.rerun()
 
 
 def render_quiz_header() -> None:
-    sound_icon = ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"]
     st.markdown(
         f"""
         <nav class="quiz-header-fixed" aria-label="Quiz navigation">
-            <a class="quiz-icon-link" href="?quiz_action=home" aria-label="Home">{ICONS["home"]}</a>
-            <a class="quiz-icon-link" href="?quiz_action=sound" aria-label="Speaker">{sound_icon}</a>
+            <a class="quiz-icon-link" href="?quiz_action=home" aria-label="Home" target="_self">{ICONS["home"]}</a>
         </nav>
         """,
         unsafe_allow_html=True,
@@ -611,7 +535,7 @@ def render_home():
 
     lang = st.session_state.lang
     t = LANG[lang]
-    topic_keys = list(TOPIC_META.keys())
+    topic_keys = [k for k in TOPIC_META.keys() if k != "letters"]
     labels = [topic_label(k, lang) for k in topic_keys]
     selected = st.selectbox(
         label=t["topic"],
@@ -619,8 +543,6 @@ def render_home():
         format_func=lambda x: labels[topic_keys.index(x)],
     )
     st.session_state.topic = selected
-
-    st.session_state.bgm_enabled = st.toggle("🔊 " + t["sound_on"], value=st.session_state.bgm_enabled)
 
     st.markdown("<div class='home-action-buttons'></div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -1165,7 +1087,7 @@ def main():
             div[data-testid="stElementContainer"]:has(.quiz-footer-action) + div[data-testid="stButton"] {
                 position: fixed !important;
                 right: max(env(safe-area-inset-right), 20px) !important;
-                bottom: calc(max(env(safe-area-inset-bottom), 0px) + 86px) !important;
+                bottom: calc(max(env(safe-area-inset-bottom), 0px) + 132px) !important;
                 width: min(176px, calc(100vw - 40px)) !important;
                 z-index: 10000 !important;
             }
