@@ -608,11 +608,11 @@ def render_quiz():
                 border, bg = "1.5px solid #E5E7EB", "#FFFFFF"
             
             b64_uri = to_data_uri(img_path)
-            grid_html += f'''
-            <div class="locked-answer-card" style="border:{border}; background:{bg};">
-                <img src="{b64_uri}">
-            </div>
-            '''
+            grid_html += (
+                f'<div class="locked-answer-card" style="border:{border}; background:{bg};">'
+                f'<img src="{b64_uri}">'
+                "</div>"
+            )
         grid_html += "</div>"
         st.markdown(grid_html, unsafe_allow_html=True)
     else:
