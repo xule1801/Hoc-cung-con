@@ -1049,12 +1049,12 @@ def main():
                 padding: 0 !important;
             }
             .quiz-top-actions {
-                height: 64px;
+                height: 72px;
                 width: 100%;
             }
             .quiz-header-fixed {
                 position: fixed !important;
-                top: calc(max(env(safe-area-inset-top), 0px) + 52px) !important;
+                top: calc(max(env(safe-area-inset-top), 0px) + 16px) !important;
                 left: 0 !important;
                 right: 0 !important;
                 z-index: 10000 !important;
@@ -1122,37 +1122,13 @@ def main():
                 max-width: 100% !important;
                 width: 100% !important;
             }
-            .stApp::before,
-            .stApp::after {
-                position: fixed;
-                left: 0;
-                width: 100%;
-                height: 38px;
-                z-index: 9998;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #E5E7EB;
-                color: #6B7280;
-                content: "Quảng cáo";
-                font-size: 12px;
-                letter-spacing: 0.1em;
-                text-transform: uppercase;
-                pointer-events: none;
-            }
-            .stApp::before {
-                top: 0;
-            }
-            .stApp::after {
-                bottom: 0;
-            }
             .stApp,
             [data-testid="stAppViewContainer"] {
                 background: linear-gradient(180deg, #FFFFFF 0%, #F7F8FA 42%, #D1D5DB 100%) !important;
             }
             .main .block-container {
-                padding-top: calc(max(env(safe-area-inset-top), 0px) + 58px) !important;
-                padding-bottom: calc(max(env(safe-area-inset-bottom), 0px) + 58px) !important;
+                padding-top: calc(max(env(safe-area-inset-top), 0px) + 18px) !important;
+                padding-bottom: calc(max(env(safe-area-inset-bottom), 0px) + 22px) !important;
             }
             button[aria-label="🏠"],
             div[data-testid="stButton"] button[aria-label="🏠"] {
@@ -1181,7 +1157,7 @@ def main():
                 line-height: 1 !important;
             }
             .quiz-top-actions {
-                height: 56px !important;
+                height: 72px !important;
             }
             .quiz-footer-action {
                 height: 64px;
@@ -1189,7 +1165,7 @@ def main():
             div[data-testid="stElementContainer"]:has(.quiz-footer-action) + div[data-testid="stButton"] {
                 position: fixed !important;
                 right: max(env(safe-area-inset-right), 20px) !important;
-                bottom: calc(max(env(safe-area-inset-bottom), 0px) + 58px) !important;
+                bottom: calc(max(env(safe-area-inset-bottom), 0px) + 46px) !important;
                 width: min(176px, calc(100vw - 40px)) !important;
                 z-index: 10000 !important;
             }
