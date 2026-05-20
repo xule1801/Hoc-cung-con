@@ -410,7 +410,7 @@ def build_round(lang: str, topic: str, size: int = 10):
 def init_state():
     st.session_state.setdefault("screen", "home")
     st.session_state.setdefault("lang", "vi")
-    st.session_state.setdefault("topic", "colors")
+    st.session_state.setdefault("topic", "numbers")
     if "bgm_enabled" not in st.session_state:
         st.session_state.bgm_enabled = st.session_state.get("sound", True)
     st.session_state.setdefault("round", [])
@@ -535,7 +535,7 @@ def render_home():
 
     lang = st.session_state.lang
     t = LANG[lang]
-    topic_keys = [k for k in TOPIC_META.keys() if k != "letters"]
+    topic_keys = ["numbers", "colors", "shapes", "animals"]
     labels = [topic_label(k, lang) for k in topic_keys]
     selected = st.selectbox(
         label=t["topic"],
