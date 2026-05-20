@@ -571,6 +571,32 @@ def render_parent_guide():
             st.rerun()
 
 
+def handle_query_actions():
+    action = st.query_params.get("quiz_action")
+    if not action:
+        return
+    st.query_params.clear()
+    if action == "home":
+        stop_applause()
+        st.session_state.screen = "home"
+    elif action == "sound":
+        st.session_state.bgm_enabled = not st.session_state.bgm_enabled
+    st.rerun()
+
+
+def render_quiz_header() -> None:
+    sound_icon = ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"]
+    st.markdown(
+        f"""
+        <nav class="quiz-header-fixed" aria-label="Quiz navigation">
+            <a class="quiz-icon-link" href="?quiz_action=home" aria-label="Home">{ICONS["home"]}</a>
+            <a class="quiz-icon-link" href="?quiz_action=sound" aria-label="Speaker">{sound_icon}</a>
+        </nav>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_home():
     lang = st.session_state.lang
     t = LANG[lang]
@@ -614,17 +640,8 @@ def render_quiz():
     q = st.session_state.round[st.session_state.index]
     completed = st.session_state.index
 
+    render_quiz_header()
     st.markdown("<div class='quiz-top-actions'></div>", unsafe_allow_html=True)
-    if st.button(ICONS["home"], key="quiz_home_button"):
-        stop_applause()
-        st.session_state.screen = "home"
-        st.rerun()
-    if st.button(
-        ICONS["sound_on"] if st.session_state.bgm_enabled else ICONS["sound_off"],
-        key="quiz_sound_button",
-    ):
-        st.session_state.bgm_enabled = not st.session_state.bgm_enabled
-        st.rerun()
 
     score_label = "Số câu đúng" if lang == "vi" else "Correct answers"
     st.markdown(
@@ -821,6 +838,7 @@ def render_result():
 def main():
     st.set_page_config(page_title="Học Cùng Con", page_icon="🌈", layout="centered")
     init_state()
+    handle_query_actions()
     render_bgm(st.session_state.bgm_enabled)
     st.markdown(
         """
@@ -1034,21 +1052,33 @@ def main():
                 height: 64px;
                 width: 100%;
             }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stButton"] {
+            .quiz-header-fixed {
                 position: fixed !important;
-                top: max(env(safe-area-inset-top), 14px) !important;
-                right: calc(max(env(safe-area-inset-right), 14px) + 46px) !important;
-                width: 150px !important;
-                height: 56px !important;
-                z-index: 9999 !important;
+                top: calc(max(env(safe-area-inset-top), 0px) + 52px) !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 10000 !important;
+                width: 100vw !important;
+                height: 48px !important;
+                padding: 0 20px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                box-sizing: border-box !important;
+                pointer-events: none;
             }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stButton"] + div[data-testid="stButton"] {
-                position: fixed !important;
-                top: max(env(safe-area-inset-top), 14px) !important;
-                right: max(env(safe-area-inset-right), 14px) !important;
-                width: 44px !important;
-                height: 56px !important;
-                z-index: 9999 !important;
+            .quiz-icon-link {
+                width: 48px !important;
+                height: 48px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 12px !important;
+                color: #111827 !important;
+                text-decoration: none !important;
+                font-size: 2rem !important;
+                line-height: 1 !important;
+                pointer-events: auto;
             }
             button[aria-label^="🎧"],
             div[data-testid="stButton"] button[aria-label^="🎧"] {
@@ -1137,23 +1167,6 @@ def main():
                 font-size: 2rem !important;
                 line-height: 1 !important;
                 padding: 0 !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stButton"] {
-                position: fixed !important;
-                top: calc(max(env(safe-area-inset-top), 0px) + 52px) !important;
-                left: max(env(safe-area-inset-left), 20px) !important;
-                right: auto !important;
-                width: 48px !important;
-                height: 48px !important;
-                z-index: 10000 !important;
-            }
-            div[data-testid="stElementContainer"]:has(.quiz-top-actions) + div[data-testid="stButton"] + div[data-testid="stButton"] {
-                position: fixed !important;
-                top: calc(max(env(safe-area-inset-top), 0px) + 52px) !important;
-                right: max(env(safe-area-inset-right), 20px) !important;
-                width: 48px !important;
-                height: 48px !important;
-                z-index: 10000 !important;
             }
             button[aria-label="🔊"],
             button[aria-label="🔇"],
